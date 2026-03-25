@@ -1,33 +1,73 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Design Guide V7 Colors */
+  --color-primary: #0F172A;
+  --color-secondary: #14C9C9;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #E11D48;
+  --color-info: #3B82F6;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Background Colors */
+  --bg-content: #F7F5F2;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  /* Text Colors */
+  --text-primary: #0F172A;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+
+  /* Border Colors */
+  --border-color: #E5E7EB;
+  --divider-color: #F0F2F5;
+
+  /* Fonts */
+  --font-heading: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Albert Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+
+  /* Spacing Scale */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+
+  /* Card Styles */
+  --card-radius: 16px;
+  --card-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  --card-padding: 24px;
+
+  /* Focus Ring */
+  --focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Apply fonts globally */
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-content);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* Headings use Plus Jakarta Sans */
+h1, h2, h3, h4, h5, h6,
+.semi-typography-h1, .semi-typography-h2, .semi-typography-h3,
+.semi-typography-h4, .semi-typography-h5, .semi-typography-h6 {
+  font-family: var(--font-heading);
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
+}
+
+/* Button touch targets */
+.semi-button {
+  min-height: 44px;
 }
 
 @media (prefers-color-scheme: dark) {

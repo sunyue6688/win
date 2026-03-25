@@ -43,9 +43,10 @@ const SIDEBAR = {
   width: 240,
   collapsedWidth: 64,
   itemHeight: 48,
-  backgroundColor: '#1a2740',
-  hoverBackground: 'rgba(255,255,255,0.1)',
-  activeBorder: `4px solid #4080FF`,
+  backgroundColor: '#FFFFFF',
+  hoverBackground: '#F3F4F6',
+  activeBorder: `4px solid #3B82F6`,
+  borderColor: '#E5E7EB',
 }
 
 export default function AppShell({
@@ -71,6 +72,7 @@ export default function AppShell({
         style={{
           backgroundColor: SIDEBAR.backgroundColor,
           width: collapsed ? SIDEBAR.collapsedWidth : SIDEBAR.width,
+          borderRight: `1px solid ${SIDEBAR.borderColor}`,
           transition: 'width 0.2s ease',
         }}
       >
@@ -82,10 +84,10 @@ export default function AppShell({
             alignItems: 'center',
             justifyContent: collapsed ? 'center' : 'flex-start',
             padding: collapsed ? 0 : '0 20px',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderBottom: `1px solid ${COLORS.border}`,
             fontWeight: 700,
             fontSize: collapsed ? 12 : 16,
-            color: '#fff',
+            color: COLORS.textPrimary,
             letterSpacing: collapsed ? 0 : 2,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -111,8 +113,8 @@ export default function AppShell({
               height: SIDEBAR.itemHeight,
               borderRadius: 8,
               margin: '4px 8px',
-              color: currentPage === item.key ? '#fff' : 'rgba(255,255,255,0.65)',
-              backgroundColor: currentPage === item.key ? 'rgba(64,128,255,0.2)' : 'transparent',
+              color: currentPage === item.key ? COLORS.info : COLORS.textSecondary,
+              backgroundColor: currentPage === item.key ? '#E8F2FF' : 'transparent',
               borderLeft: currentPage === item.key ? SIDEBAR.activeBorder : '4px solid transparent',
               transition: 'all 0.2s ease',
             },
@@ -224,8 +226,8 @@ export default function AppShell({
         {/* 内容区域 */}
         <Content
           style={{
-            padding: 20,
-            backgroundColor: '#F8FAFC',
+            padding: 24,
+            backgroundColor: COLORS.content,
             minHeight: 'calc(100vh - 56px)',
             overflow: 'auto',
           }}

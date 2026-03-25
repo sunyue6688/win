@@ -1,25 +1,36 @@
 /**
  * 成本管理看板 - 主题配置
- * 基于 V7 规范
+ * 基于 Design Guide V7 规范
  */
+
+/**
+ * 字体配置
+ */
+export const FONTS = {
+  heading: '"Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif',
+  body: '"Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif',
+  mono: 'ui-monospace, Consolas, monospace',
+} as const
+
 export const COLORS = {
   // 主色调
-  primary: '#4080FF',
+  primary: '#0F172A',
   secondary: '#14C9C9',
 
   // 语义色
-  success: '#3DC779',
-  warning: '#FAC858',
-  danger: '#EE6666',
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#E11D48',
+  info: '#3B82F6',
 
   // 背景色
-  sidebar: '#1a2740',
-  content: '#F8FAFC',
+  sidebar: '#FFFFFF',
+  content: '#F7F5F2',
   card: '#ffffff',
   hover: '#F9FAFB',
 
   // 文字色
-  textPrimary: '#1a2740',
+  textPrimary: '#0F172A',
   textSecondary: '#666666',
   textTertiary: '#999999',
 
@@ -28,11 +39,11 @@ export const COLORS = {
   divider: '#F0F2F5',
 
   // 图表配色（内部人力灰色、外采蓝色、商务黄色、其他红色）
-  chart: ['#E5E7EB', '#4080FF', '#FAC858', '#EE6666'],
-  chartBlue: '#4080FF',
+  chart: ['#E5E7EB', '#3B82F6', '#F59E0B', '#E11D48'],
+  chartBlue: '#3B82F6',
   chartCyan: '#14C9C9',
-  chartYellow: '#FAC858',
-  chartRed: '#EE6666',
+  chartYellow: '#F59E0B',
+  chartRed: '#E11D48',
 
   // 状态背景色
   bgGreen: '#E8F5E9',
@@ -46,9 +57,9 @@ export const COLORS = {
  * 状态颜色映射
  */
 export const STATUS_COLORS: Record<string, { bg: string; text: string; tagColor: string }> = {
-  '进行中': { bg: '#E8F2FF', text: '#4080FF', tagColor: 'blue' },
-  '已签约': { bg: '#E8F5E9', text: '#3DC779', tagColor: 'green' },
-  '待评估': { bg: '#FFF4E5', text: '#FAC858', tagColor: 'orange' },
+  '进行中': { bg: '#E8F2FF', text: '#3B82F6', tagColor: 'blue' },
+  '已签约': { bg: '#E8F5E9', text: '#10B981', tagColor: 'green' },
+  '待评估': { bg: '#FFF4E5', text: '#F59E0B', tagColor: 'orange' },
   '已完成': { bg: '#F2F4F8', text: '#9CA3AF', tagColor: 'grey' },
 }
 
@@ -59,11 +70,11 @@ export const CARD_STYLES = {
   base: {
     borderRadius: 16,
     backgroundColor: COLORS.card,
-    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
     transition: 'box-shadow 0.2s ease',
   },
   hover: {
-    boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
   },
   header: {
     fontSize: 16,
@@ -72,7 +83,7 @@ export const CARD_STYLES = {
     marginBottom: 16,
   },
   body: {
-    padding: 20,
+    padding: 24,
   },
 } as const
 
@@ -80,9 +91,9 @@ export const CARD_STYLES = {
  * 进度条样式
  */
 export const PROGRESS_COLORS = {
-  warning: { from: '#FAC858', to: '#EE6666' },
-  normal: { from: '#4080FF', to: '#14C9C9' },
-  good: { from: '#3DC779', to: '#14C9C9' },
+  warning: { from: '#F59E0B', to: '#E11D48' },
+  normal: { from: '#3B82F6', to: '#14C9C9' },
+  good: { from: '#10B981', to: '#14C9C9' },
 } as const
 
 /**
@@ -129,8 +140,9 @@ export const SIDEBAR_STYLES = {
   collapsedWidth: 64,
   itemHeight: 48,
   backgroundColor: COLORS.sidebar,
-  hoverBackground: 'rgba(255,255,255,0.1)',
-  activeBorder: `4px solid ${COLORS.primary}`,
+  hoverBackground: '#F3F4F6',
+  activeBorder: `4px solid ${COLORS.info}`,
+  borderColor: COLORS.border,
 } as const
 
 /**
