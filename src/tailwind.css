@@ -1,0 +1,16 @@
+/* Tailwind CSS 入口 - 使用 CSS Layer 控制与 Semi Design 的优先级 */
+
+/* 定义 Layer 优先级：tailwind-base < semi < tailwind-components < tailwind-utils */
+@layer tailwind-base, semi, tailwind-components, tailwind-utils;
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-components {
+  @tailwind components;
+}
+
+@layer tailwind-utils {
+  @tailwind utilities;
+}

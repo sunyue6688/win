@@ -16,15 +16,6 @@ export default function Dashboard({ overview }: Props) {
     ? ((overview.planRevenue - overview.totalPlanCost) / overview.planRevenue) * 100
     : 0
 
-  // 可变成本 = 外采 + 商务 + 其他（排除内部人力）
-  const variableActual = overview.costCategories
-    .filter(c => c.category !== '内部人力')
-    .reduce((s, c) => s + c.actual, 0)
-  const variablePlan = overview.costCategories
-    .filter(c => c.category !== '内部人力')
-    .reduce((s, c) => s + c.plan, 0)
-  const fixedActual = overview.costCategories.find(c => c.category === '内部人力')?.actual || 0
-
   // 趋势
   const totalPct = calcPct(overview.totalActualCost, overview.totalPlanCost)
   const totalTrend = getTrend(overview.totalActualCost, overview.totalPlanCost)
