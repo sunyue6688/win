@@ -178,7 +178,7 @@ export default function Dashboard({ overview }: Props) {
       <Row gutter={24}>
         {/* 左侧：成本结构饼图 */}
         <Col span={8}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, minHeight: 320 }} bodyStyle={{ padding: 20 }}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>成本结构</div>
             <ReactECharts option={costPieOption} style={{ height: 260 }} opts={{ renderer: 'svg' }} />
           </Card>
@@ -186,7 +186,7 @@ export default function Dashboard({ overview }: Props) {
 
         {/* 右侧：成本分类明细表格 */}
         <Col span={16}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, minHeight: 320 }} bodyStyle={{ padding: 20 }}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>成本分类明细</div>
             <div style={{ overflow: 'auto', height: 280, marginTop: 16 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 600 }}>

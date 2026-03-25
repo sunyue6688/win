@@ -365,14 +365,14 @@ export default function ProjectView({ projects }: Props) {
       {/* 第二块：区县分布图 + 项目经理列表（1:1 等高双栏） */}
       <Row gutter={16}>
         <Col span={12}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, minHeight: 320 }} bodyStyle={{ padding: 20 }}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>区县项目金额分布（前10）</div>
             <ReactECharts option={districtBarOption} style={{ height: 260 }} />
           </Card>
         </Col>
         <Col span={12}>
           {/* 项目经理列表卡片 */}
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, minHeight: 320 }} bodyStyle={{ padding: 20 }}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>项目经理列表</div>
             {/* 筛选区 */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, marginTop: 12 }}>

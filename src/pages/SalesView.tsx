@@ -174,13 +174,13 @@ export default function SalesView({ salesTargets }: Props) {
       {/* 图表区域 */}
       <Row gutter={16}>
         <Col span={12}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 20 }}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>目标完成率</div>
             <ReactECharts option={barOption} style={{ height: 280 }} />
           </Card>
         </Col>
         <Col span={12}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 20 }}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>利润率对比</div>
             <ReactECharts option={profitOption} style={{ height: 280 }} />
           </Card>
