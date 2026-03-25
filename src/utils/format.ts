@@ -106,6 +106,15 @@ export function getProgressColor(pct: number): {
 }
 
 /**
+ * 格式化金额为万元（保留两位小数）
+ * @param v 金额（元）
+ * @returns 格式化后的字符串，如 "123.45 万"
+ */
+export function fmtAmountWan(v: number): string {
+  return `${(v / 10000).toFixed(2)} 万`
+}
+
+/**
  * 获取完成率颜色
  * @param pct 百分比
  * @returns 颜色值

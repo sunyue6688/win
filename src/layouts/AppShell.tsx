@@ -1,6 +1,6 @@
 /**
  * 共享布局组件 - AppShell
- * 包含侧边栏、顶部工具栏、版本切换开关
+ * 包含侧边栏、顶部工具栏
  */
 import { Layout, Nav, Dropdown, Avatar, Button, Toast } from '@douyinfe/semi-ui'
 import {
@@ -10,10 +10,10 @@ import {
   IconChevronDown,
 } from '@douyinfe/semi-icons'
 import { fmtDateTime } from '../utils/format'
+import { COLORS } from '../styles/theme'
 
 const { Sider, Content, Header } = Layout
 
-export type AppVersion = 'basic' | 'cost'
 export type UserRole = 'boss' | 'pm' | 'sales'
 
 export interface NavItem {
@@ -23,8 +23,6 @@ export interface NavItem {
 }
 
 interface Props {
-  version: AppVersion
-  onVersionChange: (v: AppVersion) => void
   currentPage: string
   onPageChange: (page: string) => void
   userRole: UserRole
@@ -41,20 +39,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   sales: '销售视角',
 }
 
-const VERSION_LABELS: Record<AppVersion, string> = {
-  basic: '基础版',
-  cost: '专注成本版',
-}
-
-const COLORS = {
-  sidebar: '#1a2740',
-  primary: '#4080FF',
-  textPrimary: '#1a2740',
-  textSecondary: '#666666',
-  textTertiary: '#999999',
-  border: '#E5E7EB',
-}
-
 const SIDEBAR = {
   width: 240,
   collapsedWidth: 64,
@@ -65,8 +49,6 @@ const SIDEBAR = {
 }
 
 export default function AppShell({
-  version,
-  onVersionChange,
   currentPage,
   onPageChange,
   userRole,
@@ -81,8 +63,6 @@ export default function AppShell({
   const handleExport = () => {
     Toast.info('导出功能开发中...')
   }
-
-  const contentBg = version === 'basic' ? '#f5f6fa' : '#F8FAFC'
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -114,44 +94,12 @@ export default function AppShell({
           {collapsed ? '成本' : '成本管理看板'}
         </div>
 
-        {/* 版本切换 */}
-        <div style={{ padding: '12px 8px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div
-            style={{
-              display: 'flex',
-              borderRadius: 8,
-              overflow: 'hidden',
-              backgroundColor: 'rgba(255,255,255,0.05)',
-            }}
-          >
-            {(Object.keys(VERSION_LABELS) as AppVersion[]).map((v) => (
-              <button
-                key={v}
-                onClick={() => onVersionChange(v)}
-                style={{
-                  flex: 1,
-                  padding: '8px 0',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: version === v ? 600 : 400,
-                  color: version === v ? '#fff' : 'rgba(255,255,255,0.5)',
-                  backgroundColor: version === v ? 'rgba(64,128,255,0.3)' : 'transparent',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {VERSION_LABELS[v]}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* 导航菜单 */}
         <Nav
           selectedKeys={[currentPage]}
           style={{
             maxWidth: collapsed ? SIDEBAR.collapsedWidth : SIDEBAR.width,
-            height: 'calc(100vh - 120px)',
+            height: 'calc(100vh - 64px)',
             backgroundColor: 'transparent',
           }}
           bodyStyle={{ backgroundColor: 'transparent' }}
@@ -213,16 +161,6 @@ export default function AppShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.textPrimary }}>
               {navItems.find(item => item.key === currentPage)?.text || ''}
-            </span>
-            <span style={{
-              fontSize: 12,
-              color: version === 'cost' ? COLORS.primary : COLORS.textTertiary,
-              backgroundColor: version === 'cost' ? 'rgba(64,128,255,0.1)' : COLORS.border,
-              padding: '2px 8px',
-              borderRadius: 4,
-              fontWeight: 500,
-            }}>
-              {VERSION_LABELS[version]}
             </span>
           </div>
 
@@ -287,10 +225,9 @@ export default function AppShell({
         <Content
           style={{
             padding: 20,
-            backgroundColor: contentBg,
+            backgroundColor: '#F8FAFC',
             minHeight: 'calc(100vh - 56px)',
             overflow: 'auto',
-            transition: 'background-color 0.2s ease',
           }}
         >
           {children}

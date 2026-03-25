@@ -1,5 +1,6 @@
 /**
- * 颜色主题配置
+ * 成本管理看板 - 主题配置
+ * 基于 V7 规范
  */
 export const COLORS = {
   // 主色调
@@ -13,7 +14,7 @@ export const COLORS = {
 
   // 背景色
   sidebar: '#1a2740',
-  content: '#f5f6fa',
+  content: '#F8FAFC',
   card: '#ffffff',
   hover: '#F9FAFB',
 
@@ -24,10 +25,10 @@ export const COLORS = {
 
   // 边框色
   border: '#E5E7EB',
-  divider: '#f0f0f0',
+  divider: '#F0F2F5',
 
-  // 图表配色
-  chart: ['#4080FF', '#14C9C9', '#FAC858', '#EE6666'],
+  // 图表配色（内部人力灰色、外采蓝色、商务黄色、其他红色）
+  chart: ['#E5E7EB', '#4080FF', '#FAC858', '#EE6666'],
   chartBlue: '#4080FF',
   chartCyan: '#14C9C9',
   chartYellow: '#FAC858',
@@ -36,19 +37,19 @@ export const COLORS = {
   // 状态背景色
   bgGreen: '#E8F5E9',
   bgRed: '#FFEBEE',
-  bgBlue: '#E3F2FD',
-  bgOrange: '#FFF3E0',
-  bgGrey: '#F5F5F5',
+  bgBlue: '#E8F2FF',
+  bgOrange: '#FFF4E5',
+  bgGrey: '#F2F4F8',
 } as const
 
 /**
  * 状态颜色映射
  */
-export const STATUS_COLORS: Record<string, string> = {
-  '进行中': 'blue',
-  '已签约': 'green',
-  '待评估': 'orange',
-  '已完成': 'grey',
+export const STATUS_COLORS: Record<string, { bg: string; text: string; tagColor: string }> = {
+  '进行中': { bg: '#E8F2FF', text: '#4080FF', tagColor: 'blue' },
+  '已签约': { bg: '#E8F5E9', text: '#3DC779', tagColor: 'green' },
+  '待评估': { bg: '#FFF4E5', text: '#FAC858', tagColor: 'orange' },
+  '已完成': { bg: '#F2F4F8', text: '#9CA3AF', tagColor: 'grey' },
 }
 
 /**
@@ -56,13 +57,13 @@ export const STATUS_COLORS: Record<string, string> = {
  */
 export const CARD_STYLES = {
   base: {
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: COLORS.card,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
     transition: 'box-shadow 0.2s ease',
   },
   hover: {
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
   },
   header: {
     fontSize: 16,
@@ -79,9 +80,9 @@ export const CARD_STYLES = {
  * 进度条样式
  */
 export const PROGRESS_COLORS = {
-  low: { from: '#FAC858', to: '#EE6666' },
-  medium: { from: '#4080FF', to: '#14C9C9' },
-  high: { from: '#3DC779', to: '#14C9C9' },
+  warning: { from: '#FAC858', to: '#EE6666' },
+  normal: { from: '#4080FF', to: '#14C9C9' },
+  good: { from: '#3DC779', to: '#14C9C9' },
 } as const
 
 /**
@@ -136,7 +137,7 @@ export const SIDEBAR_STYLES = {
  * 表格样式
  */
 export const TABLE_STYLES = {
-  headerBg: '#fafafa',
+  headerBg: '#F9FAFB',
   rowHeight: 56,
   hoverBg: COLORS.hover,
   borderColor: COLORS.border,
