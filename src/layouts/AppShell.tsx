@@ -69,6 +69,7 @@ export default function AppShell({
     <Layout style={{ minHeight: '100vh' }}>
       {/* 侧边栏 */}
       <Sider
+        className="app-sidebar"
         style={{
           backgroundColor: SIDEBAR.backgroundColor,
           width: collapsed ? SIDEBAR.collapsedWidth : SIDEBAR.width,
@@ -143,7 +144,10 @@ export default function AppShell({
               {!collapsed && <span>{item.text}</span>}
             </div>
           )}
-          footer={{ collapseButton: true }}
+          footer={{
+            collapseButton: true,
+            collapseText: '收起侧边栏',
+          }}
         />
       </Sider>
 
