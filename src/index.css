@@ -65,9 +65,12 @@ h1, h2, h3, h4, h5, h6,
   outline-offset: 2px;
 }
 
-/* Button touch targets */
-.semi-button {
-  min-height: 44px;
+/* Button touch targets - ensure 44px minimum for accessibility */
+button.semi-button,
+.semi-button.semi-button-borderless {
+  min-height: 44px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
 }
 
 @media (prefers-color-scheme: dark) {

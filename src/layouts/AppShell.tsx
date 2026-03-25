@@ -176,7 +176,7 @@ export default function AppShell({
               theme="borderless"
               icon={<IconRefresh />}
               onClick={onRefresh}
-              style={{ color: COLORS.textSecondary }}
+              style={{ color: COLORS.textSecondary, minHeight: 44, padding: '10px 16px' }}
             >
               刷新
             </Button>
@@ -185,7 +185,7 @@ export default function AppShell({
               theme="borderless"
               icon={<IconDownload />}
               onClick={handleExport}
-              style={{ color: COLORS.textSecondary }}
+              style={{ color: COLORS.textSecondary, minHeight: 44, padding: '10px 16px' }}
             >
               导出
             </Button>
