@@ -24,9 +24,20 @@ export default function ProjectView({ projects }: Props) {
   const [searchText, setSearchText] = useState('')
   const [pmFilter, setPmFilter] = useState<string>('全部')
   const [salesFilter, setSalesFilter] = useState<string>('全部')
+  const [pmSearchText, setPmSearchText] = useState('')
+  const [pmSelectFilter, setPmSelectFilter] = useState<string>('全部')
 
   // PM 汇总数据
   const pmSummaries = useMemo(() => generatePMSummaries(), [projects])
+
+  // PM 列表筛选
+  const filteredPmSummaries = useMemo(() => {
+    return pmSummaries.filter((pm) => {
+      const matchSearch = !pmSearchText || pm.pm.toLowerCase().includes(pmSearchText.toLowerCase())
+      // 可以根据 pmSelectFilter 添加更多筛选逻辑
+      return matchSearch
+    })
+  }, [pmSummaries, pmSearchText])
 
   // 获取所有 PM 和销售名
   const pmNames = useMemo(() => [...new Set(projects.map(p => p.pm))], [projects])
@@ -351,34 +362,46 @@ export default function ProjectView({ projects }: Props) {
         </Col>
       </Row>
 
-      {/* 第二块：区县分布图 */}
+      {/* 第二块：区县分布图 + 项目经理列表（1:1 等高双栏） */}
       <Row gutter={16}>
-        <Col span={10}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 400 }} bodyStyle={{ padding: 20 }}>
+        <Col span={12}>
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, minHeight: 320 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>区县项目金额分布（前10）</div>
-            <ReactECharts option={districtBarOption} style={{ height: 320 }} />
+            <ReactECharts option={districtBarOption} style={{ height: 260 }} />
           </Card>
         </Col>
-        <Col span={14}>
-          {/* 第三块：项目经理列表 */}
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 20 }}>
+        <Col span={12}>
+          {/* 项目经理列表卡片 */}
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, minHeight: 320 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>项目经理列表</div>
-            <Table
-              columns={pmColumns}
-              dataSource={pmSummaries}
-              pagination={false}
-              size="small"
-              rowKey="pm"
-              style={{ marginTop: 12 }}
-            />
+            {/* 筛选区 */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16, marginTop: 12 }}>
+              <Select placeholder="筛选" value={pmSelectFilter} onChange={(v) => setPmSelectFilter(v as string)} style={{ width: 120 }} size="small">
+                <Select.Option value="全部">全部</Select.Option>
+                <Select.Option value="利润率达标">利润率达标</Select.Option>
+                <Select.Option value="外采超标">外采超标</Select.Option>
+              </Select>
+              <Input placeholder="搜索项目经理" value={pmSearchText} onChange={(v) => setPmSearchText(v)} style={{ flex: 1 }} size="small" />
+            </div>
+            {/* 表格滚动容器 */}
+            <div style={{ height: 240, overflow: 'auto' }}>
+              <Table
+                columns={pmColumns}
+                dataSource={filteredPmSummaries}
+                pagination={false}
+                size="small"
+                rowKey="pm"
+              />
+            </div>
           </Card>
         </Col>
       </Row>
 
-      {/* 第四块：筛选 + 项目列表 */}
+      {/* 第三块：项目列表卡片（全宽） */}
       <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14, color: COLORS.textSecondary }}>项目状态：</span>
+        <div style={TEXT_STYLES.cardTitle}>项目列表</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
+          <span style={{ fontSize: 14, color: COLORS.textSecondary }}>状态：</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {(['全部', '进行中', '已签约', '待评估', '已完成'] as const).map((key) => (
               <Tag key={key} color={statusFilter === key ? 'blue' : 'grey'}
@@ -403,16 +426,17 @@ export default function ProjectView({ projects }: Props) {
             共 {filtered.length} 个
           </span>
         </div>
+        <div style={{ marginTop: 16 }}>
+          <Table
+            columns={columns}
+            dataSource={filtered}
+            pagination={{ pageSize: 10, showSizeChanger: false }}
+            size="small"
+            rowKey="id"
+            scroll={{ x: 1200 }}
+          />
+        </div>
       </Card>
-
-      <Table
-        columns={columns}
-        dataSource={filtered}
-        pagination={{ pageSize: 6, showSizeChanger: false }}
-        size="small"
-        rowKey="id"
-        scroll={{ x: 1200 }}
-      />
     </div>
   )
 }
