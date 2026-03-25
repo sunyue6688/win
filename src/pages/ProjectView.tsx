@@ -312,25 +312,25 @@ export default function ProjectView({ projects }: Props) {
   return (
     <div>
       {/* 第一块：项目分布看板 */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card style={CARD_STYLES.base} bodyStyle={{ padding: 16 }}>
+      <Row gutter={24} style={{ marginBottom: 16, display: 'flex' }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.primary }}>{totalProjects}</div>
               <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>总项目数</div>
             </div>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card style={CARD_STYLES.base} bodyStyle={{ padding: 16 }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#999' }}>{existingProjects}</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.textSecondary }}>{existingProjects}</div>
               <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>存量项目</div>
             </div>
           </Card>
         </Col>
-        <Col span={12}>
-          <Card style={CARD_STYLES.base} bodyStyle={{ padding: 16 }}>
+        <Col span={12} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ textAlign: 'center', flex: 1 }}>
                 <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.primary }}>{newProjects}</div>
@@ -363,7 +363,7 @@ export default function ProjectView({ projects }: Props) {
       </Row>
 
       {/* 第二块：区县分布图 + 项目经理列表（1:1 等高双栏） */}
-      <Row gutter={16}>
+      <Row gutter={24}>
         <Col span={12}>
           <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>区县项目金额分布（前10）</div>
@@ -398,7 +398,7 @@ export default function ProjectView({ projects }: Props) {
       </Row>
 
       {/* 第三块：项目列表卡片（全宽） */}
-      <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
+      <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 20 }}>
         <div style={TEXT_STYLES.cardTitle}>项目列表</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
           <span style={{ fontSize: 14, color: COLORS.textSecondary }}>状态：</span>
@@ -426,14 +426,13 @@ export default function ProjectView({ projects }: Props) {
             共 {filtered.length} 个
           </span>
         </div>
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16, overflow: 'auto' }}>
           <Table
             columns={columns}
             dataSource={filtered}
             pagination={{ pageSize: 10, showSizeChanger: false }}
             size="small"
             rowKey="id"
-            scroll={{ x: 1200 }}
           />
         </div>
       </Card>

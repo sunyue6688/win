@@ -1,7 +1,7 @@
 import { Card, Row, Col, Tag, Progress } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
 import type { DepartmentOverview } from '../mockData'
-import { fmtAmount, calcPct, getTrend } from '../utils/format'
+import { fmtAmount, fmtAmountWan, calcPct, getTrend } from '../utils/format'
 import { COLORS, CARD_STYLES, TEXT_STYLES, PROGRESS_COLORS } from '../styles/theme'
 
 interface Props {
@@ -79,10 +79,10 @@ export default function Dashboard({ overview }: Props) {
       </div>
 
       {/* 第二行：4个KPI卡片等宽等高 */}
-      <Row gutter={24} style={{ marginBottom: 16 }}>
+      <Row gutter={24} style={{ marginBottom: 16, display: 'flex' }}>
         {/* 年度收入 */}
-        <Col span={6}>
-          <Card style={{ ...CARD_STYLES.base, height: '100%', minHeight: 120 }} bodyStyle={{ padding: 20 }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
             <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={TEXT_STYLES.caption}>年度收入</span>
               <span style={{ fontSize: 12, color: revenueTrend.color, fontWeight: 600 }}>{revenueTrend.icon} {revenueTrend.text}</span>
@@ -104,8 +104,8 @@ export default function Dashboard({ overview }: Props) {
         </Col>
 
         {/* 年度成本（突出显示） */}
-        <Col span={6}>
-          <Card style={{ ...CARD_STYLES.base, height: '100%', minHeight: 120, borderLeft: '4px solid #E11D48' }} bodyStyle={{ padding: 20 }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1, borderLeft: '4px solid #E11D48' }} bodyStyle={{ padding: 20 }}>
             <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={TEXT_STYLES.caption}>年度成本</span>
               <span style={{ fontSize: 12, color: totalTrend.color, fontWeight: 600 }}>{totalTrend.icon} {totalTrend.text}</span>
@@ -127,21 +127,21 @@ export default function Dashboard({ overview }: Props) {
         </Col>
 
         {/* 年度利润 */}
-        <Col span={6}>
-          <Card style={{ ...CARD_STYLES.base, height: '100%', minHeight: 120 }} bodyStyle={{ padding: 20 }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
             <div style={{ marginBottom: 12 }}><span style={TEXT_STYLES.caption}>年度利润</span></div>
             <div style={{ ...TEXT_STYLES.valueLarge, color: COLORS.secondary, marginBottom: 12 }}>
-              {fmtAmount(overview.actualRevenue - overview.totalActualCost)}
+              {fmtAmountWan(overview.actualRevenue - overview.totalActualCost)}
             </div>
             <div style={{ fontSize: 12, color: COLORS.textTertiary }}>
-              收入 {fmtAmount(overview.actualRevenue)} - 成本 {fmtAmount(overview.totalActualCost)}
+              收入 {fmtAmountWan(overview.actualRevenue)} - 成本 {fmtAmountWan(overview.totalActualCost)}
             </div>
           </Card>
         </Col>
 
         {/* 年度利润率 */}
-        <Col span={6}>
-          <Card style={{ ...CARD_STYLES.base, height: '100%', minHeight: 120 }} bodyStyle={{ padding: 20 }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
             <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={TEXT_STYLES.caption}>年度利润率</span>
               {profitRate >= planProfitRate

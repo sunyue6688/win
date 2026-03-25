@@ -2,6 +2,7 @@
  * 共享布局组件 - AppShell
  * 包含侧边栏、顶部工具栏
  */
+import { useState } from 'react'
 import { Layout, Nav, Dropdown, Avatar, Button, Toast } from '@douyinfe/semi-ui'
 import {
   IconRefresh,
@@ -39,15 +40,8 @@ const ROLE_LABELS: Record<UserRole, string> = {
   sales: '销售视角',
 }
 
-const SIDEBAR = {
-  width: 240,
-  collapsedWidth: 64,
-  itemHeight: 48,
-  backgroundColor: '#FFFFFF',
-  hoverBackground: '#F3F4F6',
-  activeBorder: `4px solid #3B82F6`,
-  borderColor: '#E5E7EB',
-}
+const SIDEBAR_WIDTH = 240
+const SIDEBAR_COLLAPSED_WIDTH = 60
 
 export default function AppShell({
   currentPage,
@@ -59,21 +53,28 @@ export default function AppShell({
   navItems,
   children,
 }: Props) {
-  const collapsed = false
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleExport = () => {
     Toast.info('导出功能开发中...')
   }
 
+  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', display: 'flex' }}>
       {/* 侧边栏 */}
       <Sider
         style={{
-          backgroundColor: SIDEBAR.backgroundColor,
-          width: collapsed ? SIDEBAR.collapsedWidth : SIDEBAR.width,
-          borderRight: `1px solid ${SIDEBAR.borderColor}`,
-          transition: 'width 0.2s ease',
+          width: sidebarWidth,
+          minWidth: sidebarWidth,
+          maxWidth: sidebarWidth,
+          flex: '0 0 auto',
+          backgroundColor: '#fff',
+          height: '100vh',
+          borderRight: `1px solid ${COLORS.border}`,
+          transition: 'all 0.2s ease',
+          overflow: 'hidden',
         }}
       >
         {/* 品牌区 */}
@@ -83,24 +84,23 @@ export default function AppShell({
             display: 'flex',
             alignItems: 'center',
             justifyContent: collapsed ? 'center' : 'flex-start',
-            padding: collapsed ? 0 : '0 20px',
+            padding: collapsed ? '0 16px' : '0 20px',
             borderBottom: `1px solid ${COLORS.border}`,
             fontWeight: 700,
-            fontSize: collapsed ? 12 : 16,
+            fontSize: 16,
             color: COLORS.textPrimary,
-            letterSpacing: collapsed ? 0 : 2,
+            letterSpacing: 2,
             whiteSpace: 'nowrap',
-            overflow: 'hidden',
           }}
         >
           {collapsed ? '成本' : '成本管理看板'}
         </div>
 
-        {/* 导航菜单 */}
+        {/* 导航菜单 - 使用组件库原生样式 */}
         <Nav
           selectedKeys={[currentPage]}
+          collapsed={collapsed}
           style={{
-            maxWidth: collapsed ? SIDEBAR.collapsedWidth : SIDEBAR.width,
             height: 'calc(100vh - 64px)',
             backgroundColor: 'transparent',
           }}
@@ -109,45 +109,15 @@ export default function AppShell({
             itemKey: item.key,
             text: item.text,
             icon: item.icon,
-            style: {
-              height: SIDEBAR.itemHeight,
-              borderRadius: 8,
-              margin: '4px 8px',
-              color: currentPage === item.key ? COLORS.info : COLORS.textSecondary,
-              backgroundColor: currentPage === item.key ? '#E8F2FF' : 'transparent',
-              borderLeft: currentPage === item.key ? SIDEBAR.activeBorder : '4px solid transparent',
-              transition: 'all 0.2s ease',
-            },
           }))}
           onClick={({ itemKey }) => onPageChange(itemKey as string)}
-          renderItem={(item: { itemKey: string; text: string; icon: React.ReactNode }) => (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '0 8px',
-              }}
-              onMouseEnter={(e) => {
-                if (item.itemKey !== currentPage) {
-                  e.currentTarget.style.backgroundColor = SIDEBAR.hoverBackground
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (item.itemKey !== currentPage) {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }
-              }}
-            >
-              {item.icon}
-              {!collapsed && <span>{item.text}</span>}
-            </div>
-          )}
+          onCollapseChange={setCollapsed}
           footer={{ collapseButton: true }}
         />
       </Sider>
 
-      <Layout>
+      {/* 右侧主内容区 - flex: 1 自动填充剩余空间 */}
+      <Layout style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* 顶部工具栏 */}
         <Header
           style={{
@@ -156,7 +126,8 @@ export default function AppShell({
             display: 'flex',
             alignItems: 'center',
             padding: '0 24px',
-            height: 56,
+            height: 64,
+            flexShrink: 0,
             justifyContent: 'space-between',
           }}
         >
@@ -176,7 +147,7 @@ export default function AppShell({
               theme="borderless"
               icon={<IconRefresh />}
               onClick={onRefresh}
-              style={{ color: COLORS.textSecondary, minHeight: 44, padding: '10px 16px' }}
+              style={{ color: COLORS.textSecondary }}
             >
               刷新
             </Button>
@@ -185,7 +156,7 @@ export default function AppShell({
               theme="borderless"
               icon={<IconDownload />}
               onClick={handleExport}
-              style={{ color: COLORS.textSecondary, minHeight: 44, padding: '10px 16px' }}
+              style={{ color: COLORS.textSecondary }}
             >
               导出
             </Button>
@@ -228,7 +199,8 @@ export default function AppShell({
           style={{
             padding: 24,
             backgroundColor: COLORS.content,
-            minHeight: 'calc(100vh - 56px)',
+            minHeight: 'calc(100vh - 64px)',
+            flex: 1,
             overflow: 'auto',
           }}
         >

@@ -133,20 +133,20 @@ export default function SalesView({ salesTargets }: Props) {
   ]
 
   // 卡片统一高度
-  const cardBodyStyle = { padding: 16, minHeight: 90 }
+  const cardBodyStyle = { padding: 20, minHeight: 100 }
 
   return (
     <div>
       {/* 顶部统计卡片 — 高度统一 */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card style={CARD_STYLES.base} bodyStyle={cardBodyStyle}>
+      <Row gutter={24} style={{ marginBottom: 16, display: 'flex' }}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={cardBodyStyle}>
             <div style={{ fontSize: 13, color: COLORS.textTertiary, marginBottom: 4 }}>总计划收入</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: COLORS.primary }}>{fmtAmountShort(totalPlan)}</div>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card style={CARD_STYLES.base} bodyStyle={cardBodyStyle}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={cardBodyStyle}>
             <div style={{ fontSize: 13, color: COLORS.textTertiary, marginBottom: 4 }}>总实际收入</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: COLORS.secondary }}>{fmtAmountShort(totalActual)}</div>
             <div style={{ fontSize: 12, color: COLORS.textTertiary, marginTop: 4 }}>
@@ -157,14 +157,14 @@ export default function SalesView({ salesTargets }: Props) {
             </div>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card style={CARD_STYLES.base} bodyStyle={cardBodyStyle}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={cardBodyStyle}>
             <div style={{ fontSize: 13, color: COLORS.textTertiary, marginBottom: 4 }}>平均利润率</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: COLORS.primary }}>{avgProfitRate.toFixed(1)}%</div>
           </Card>
         </Col>
-        <Col span={6}>
-          <Card style={CARD_STYLES.base} bodyStyle={cardBodyStyle}>
+        <Col span={6} style={{ display: 'flex' }}>
+          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={cardBodyStyle}>
             <div style={{ fontSize: 13, color: COLORS.textTertiary, marginBottom: 4 }}>总项目数</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: COLORS.textPrimary }}>{totalProjects}</div>
           </Card>
@@ -172,7 +172,7 @@ export default function SalesView({ salesTargets }: Props) {
       </Row>
 
       {/* 图表区域 */}
-      <Row gutter={16}>
+      <Row gutter={24}>
         <Col span={12}>
           <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
             <div style={TEXT_STYLES.cardTitle}>目标完成率</div>

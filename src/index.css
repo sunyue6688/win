@@ -43,20 +43,37 @@
   --focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
-/* Apply fonts globally */
+/* 覆盖 Semi Design 的圆角变量 - 定义在 body 上 */
 body {
-  font-family: var(--font-body);
-  color: var(--text-primary);
-  background: var(--bg-content);
+  /* 覆盖 Semi 的圆角 */
+  --semi-border-radius-extra-small: 4px;
+  --semi-border-radius-small: 6px;
+  --semi-border-radius-medium: 8px;
+  --semi-border-radius-large: 12px;
+
+  /* 覆盖字体 */
+  font-family: var(--font-body) !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 只覆盖字体，保留 Semi 的 CSS 变量 */
+body {
+  font-family: var(--font-body) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 内容区背景色 */
+.semi-layout-content {
+  background: var(--bg-content);
 }
 
 /* Headings use Plus Jakarta Sans */
 h1, h2, h3, h4, h5, h6,
 .semi-typography-h1, .semi-typography-h2, .semi-typography-h3,
 .semi-typography-h4, .semi-typography-h5, .semi-typography-h6 {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading) !important;
 }
 
 /* Focus visible for accessibility */
@@ -95,26 +112,21 @@ button.semi-button,
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
+  margin: 0;
+  text-align: left;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-}
-
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--font-heading) !important;
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--text-primary);
 }
 
 h1 {
@@ -141,15 +153,15 @@ p {
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   display: inline-flex;
   border-radius: 4px;
-  color: var(--text-h);
+  color: var(--text-primary);
 }
 
 code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
-  background: var(--code-bg);
+  background: var(--bg-card);
 }
