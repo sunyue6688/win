@@ -68,21 +68,10 @@ h1, h2, h3, h4, h5, h6,
 /* Button touch targets - ensure 44px minimum for accessibility */
 button.semi-button,
 .semi-button.semi-button-borderless,
-.semi-navigation-footer .semi-button,
-.semi-navigation-footer button,
-.semi-button.semi-button-borderless.semi-button-with-icon {
+.semi-navigation-footer .semi-button {
   min-height: 44px !important;
-  height: 44px !important;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-}
-
-/* Sidebar collapse button touch target */
-.app-sidebar .semi-navigation-footer button,
-.app-sidebar .semi-navigation-footer .semi-button {
-  min-height: 44px !important;
-  height: 44px !important;
-  line-height: 24px !important;
 }
 
 @media (prefers-color-scheme: dark) {
