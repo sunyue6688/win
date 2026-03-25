@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Card, Table, Tag, Input, Row, Col, Progress } from '@douyinfe/semi-ui'
+import { useState, useMemo } from 'react'
+import { Card, Table, Tag, Input, Row, Col, Progress, Select } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
-import type { Project } from '../mockData'
+import type { Project, PMSummary } from '../mockData'
+import { generatePMSummaries } from '../mockData'
 import { fmtAmountShort } from '../utils/format'
 import { COLORS, CARD_STYLES, TEXT_STYLES } from '../styles/theme'
 
@@ -21,15 +22,35 @@ const statusColor: Record<string, TagColor> = {
 export default function ProjectView({ projects }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>('全部')
   const [searchText, setSearchText] = useState('')
+  const [pmFilter, setPmFilter] = useState<string>('全部')
+  const [salesFilter, setSalesFilter] = useState<string>('全部')
+
+  // PM 汇总数据
+  const pmSummaries = useMemo(() => generatePMSummaries(), [projects])
+
+  // 获取所有 PM 和销售名
+  const pmNames = useMemo(() => [...new Set(projects.map(p => p.pm))], [projects])
+  const salesNames = useMemo(() => [...new Set(projects.map(p => p.sales))], [projects])
 
   // 筛选
   const filtered = projects.filter((p) => {
     const matchStatus = statusFilter === '全部' || p.status === statusFilter
+    const matchPM = pmFilter === '全部' || p.pm === pmFilter
+    const matchSales = salesFilter === '全部' || p.sales === salesFilter
     const matchSearch = !searchText ||
       p.name.toLowerCase().includes(searchText.toLowerCase()) ||
       p.district.toLowerCase().includes(searchText.toLowerCase())
-    return matchStatus && matchSearch
+    return matchStatus && matchPM && matchSales && matchSearch
   })
+
+  // 项目分布统计
+  const totalProjects = projects.length
+  const existingProjects = projects.filter(p => p.projectType === '存量').length
+  const newProjects = projects.filter(p => p.projectType === '新增').length
+  const newPending = projects.filter(p => p.projectType === '新增' && p.status === '待评估').length
+  const newSigned = projects.filter(p => p.projectType === '新增' && p.status === '已签约').length
+  const newInProgress = projects.filter(p => p.projectType === '新增' && p.status === '进行中').length
+  const newCompleted = projects.filter(p => p.projectType === '新增' && p.status === '已完成').length
 
   // 统计各区县金额
   const districtData = projects.reduce<Record<string, { count: number; amount: number }>>((acc, p) => {
@@ -43,9 +64,7 @@ export default function ProjectView({ projects }: Props) {
     .sort(([, a], [, b]) => b.amount - a.amount)
     .slice(0, 10)
     .map(([district, data], i) => ({
-      district,
-      amount: data.amount,
-      isTop3: i < 3,
+      district, amount: data.amount, isTop3: i < 3,
     }))
 
   const districtBarOption = {
@@ -54,12 +73,12 @@ export default function ProjectView({ projects }: Props) {
     xAxis: { type: 'value', axisLabel: { formatter: (v: number) => `${(v / 10000).toFixed(0)} 万` } },
     yAxis: {
       type: 'category',
-      data: sortedDistricts.map((d) => d.isTop3 ? `🏆 ${d.district}` : d.district),
+      data: sortedDistricts.map(d => d.isTop3 ? `🏆 ${d.district}` : d.district),
       axisLabel: { fontSize: 11 },
     },
     series: [{
       type: 'bar',
-      data: sortedDistricts.map((d) => ({
+      data: sortedDistricts.map(d => ({
         value: d.amount,
         itemStyle: { color: d.isTop3 ? '#FAC858' : COLORS.primary, borderRadius: [0, 4, 4, 0] },
       })),
@@ -67,7 +86,90 @@ export default function ProjectView({ projects }: Props) {
     }],
   }
 
-  // 项目列表列（复用 cost 版列定义）
+  // PM 列表列
+  const pmColumns = [
+    {
+      title: '项目经理',
+      dataIndex: 'pm',
+      width: 100,
+      render: (text: string) => <span style={{ fontWeight: 600, color: COLORS.textPrimary }}>{text}</span>,
+    },
+    {
+      title: '项目数量',
+      dataIndex: 'projectCount',
+      width: 90,
+      align: 'center' as const,
+    },
+    {
+      title: '签约总金额',
+      dataIndex: 'totalContractAmount',
+      width: 120,
+      align: 'right' as const,
+      render: (v: number) => fmtAmountShort(v),
+    },
+    {
+      title: '已回款总金额',
+      dataIndex: 'totalReceivedPayment',
+      width: 120,
+      align: 'right' as const,
+      render: (v: number) => fmtAmountShort(v),
+    },
+    {
+      title: '预计成本',
+      dataIndex: 'estimatedCost',
+      width: 110,
+      align: 'right' as const,
+      render: (v: number) => fmtAmountShort(v),
+    },
+    {
+      title: '预计利润（利润率）',
+      width: 150,
+      render: (_: unknown, record: PMSummary) => {
+        const isGood = record.estimatedProfitRate >= 25
+        return (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '4px 8px', borderRadius: 4,
+            backgroundColor: isGood ? COLORS.bgGreen : COLORS.bgRed,
+          }}>
+            <span style={{ fontWeight: 600, fontSize: 12 }}>{fmtAmountShort(record.estimatedProfit)}</span>
+            <span style={{ fontWeight: 600, color: isGood ? COLORS.success : COLORS.danger, fontSize: 13 }}>
+              {record.estimatedProfitRate.toFixed(1)}%
+            </span>
+            <span style={{ color: isGood ? COLORS.success : COLORS.danger }}>{isGood ? '↑' : '↓'}</span>
+          </div>
+        )
+      },
+    },
+    {
+      title: '实际消耗成本',
+      dataIndex: 'actualCost',
+      width: 120,
+      align: 'right' as const,
+      render: (v: number) => <span style={{ fontWeight: 600 }}>{fmtAmountShort(v)}</span>,
+    },
+    {
+      title: '实际外采成本占比',
+      width: 140,
+      render: (_: unknown, record: PMSummary) => {
+        const overLimit = record.externalHRRatio > record.externalHRRatioLimit
+        return (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '4px 8px', borderRadius: 4,
+            backgroundColor: overLimit ? COLORS.bgRed : 'transparent',
+          }}>
+            <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.textPrimary }}>
+              {record.externalHRRatio.toFixed(1)}%
+            </span>
+            {overLimit && <span style={{ fontSize: 14 }}>⚠️</span>}
+          </div>
+        )
+      },
+    },
+  ]
+
+  // 项目列表列（复用 cost 版）
   const columns = [
     {
       title: '项目名称',
@@ -198,9 +300,58 @@ export default function ProjectView({ projects }: Props) {
 
   return (
     <div>
-      {/* TODO: Task 4 将完全重写此页面，增加分布看板、PM 列表、筛选项 */}
+      {/* 第一块：项目分布看板 */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card style={CARD_STYLES.base} bodyStyle={{ padding: 16 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.primary }}>{totalProjects}</div>
+              <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>总项目数</div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card style={CARD_STYLES.base} bodyStyle={{ padding: 16 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#999' }}>{existingProjects}</div>
+              <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>存量项目</div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card style={CARD_STYLES.base} bodyStyle={{ padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.primary }}>{newProjects}</div>
+                <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>新增项目</div>
+              </div>
+              <div style={{ flex: 2, paddingLeft: 24 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 12, color: COLORS.textTertiary }}>
+                  <span>待评估({newPending})</span>
+                  <span>已签约({newSigned})</span>
+                  <span>进行中({newInProgress})</span>
+                  <span>已完成({newCompleted})</span>
+                </div>
+                <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: COLORS.border }}>
+                  {[
+                    { value: newPending, color: COLORS.warning },
+                    { value: newSigned, color: COLORS.success },
+                    { value: newInProgress, color: COLORS.primary },
+                    { value: newCompleted, color: '#999' },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      width: `${newProjects > 0 ? (item.value / newProjects) * 100 : 0}%`,
+                      backgroundColor: item.color,
+                    }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
 
-      {/* 区县分布图 + 筛选区 */}
+      {/* 第二块：区县分布图 */}
       <Row gutter={16}>
         <Col span={10}>
           <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 400 }} bodyStyle={{ padding: 20 }}>
@@ -209,28 +360,59 @@ export default function ProjectView({ projects }: Props) {
           </Card>
         </Col>
         <Col span={14}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 14, color: COLORS.textSecondary }}>项目状态：</span>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(['全部', '进行中', '已签约', '待评估', '已完成'] as const).map((key) => (
-                  <Tag key={key} color={statusFilter === key ? 'blue' : 'grey'}
-                    style={{ cursor: 'pointer' }} onClick={() => setStatusFilter(key)}>
-                    {key} ({statusCounts[key]})
-                  </Tag>
-                ))}
-              </div>
-              <Input placeholder="搜索项目名称或区县..." value={searchText}
-                onChange={(v) => setSearchText(v)} style={{ width: 200, marginLeft: 12 }} />
-              <span style={{ fontSize: 13, color: COLORS.textTertiary, marginLeft: 'auto' }}>
-                共 {filtered.length} 个
-              </span>
-            </div>
+          {/* 第三块：项目经理列表 */}
+          <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 20 }}>
+            <div style={TEXT_STYLES.cardTitle}>项目经理列表</div>
+            <Table
+              columns={pmColumns}
+              dataSource={pmSummaries}
+              pagination={false}
+              size="small"
+              rowKey="pm"
+              style={{ marginTop: 12 }}
+            />
           </Card>
-          <Table columns={columns} dataSource={filtered}
-            pagination={{ pageSize: 6, showSizeChanger: false }} size="small" rowKey="id" scroll={{ x: 1200 }} />
         </Col>
       </Row>
+
+      {/* 第四块：筛选 + 项目列表 */}
+      <Card style={{ ...CARD_STYLES.base, marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 14, color: COLORS.textSecondary }}>项目状态：</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['全部', '进行中', '已签约', '待评估', '已完成'] as const).map((key) => (
+              <Tag key={key} color={statusFilter === key ? 'blue' : 'grey'}
+                style={{ cursor: 'pointer' }} onClick={() => setStatusFilter(key)}>
+                {key} ({statusCounts[key]})
+              </Tag>
+            ))}
+          </div>
+          <Select placeholder="项目经理" value={pmFilter} onChange={(v) => setPmFilter(v as string)}
+            style={{ width: 120 }} size="small">
+            <Select.Option value="全部">全部 PM</Select.Option>
+            {pmNames.map(name => <Select.Option key={name} value={name}>{name}</Select.Option>)}
+          </Select>
+          <Select placeholder="销售" value={salesFilter} onChange={(v) => setSalesFilter(v as string)}
+            style={{ width: 120 }} size="small">
+            <Select.Option value="全部">全部销售</Select.Option>
+            {salesNames.map(name => <Select.Option key={name} value={name}>{name}</Select.Option>)}
+          </Select>
+          <Input placeholder="搜索项目名称或区县..." value={searchText}
+            onChange={(v) => setSearchText(v)} style={{ width: 200, marginLeft: 'auto' }} />
+          <span style={{ fontSize: 13, color: COLORS.textTertiary }}>
+            共 {filtered.length} 个
+          </span>
+        </div>
+      </Card>
+
+      <Table
+        columns={columns}
+        dataSource={filtered}
+        pagination={{ pageSize: 6, showSizeChanger: false }}
+        size="small"
+        rowKey="id"
+        scroll={{ x: 1200 }}
+      />
     </div>
   )
 }
