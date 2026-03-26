@@ -91,7 +91,7 @@ export default function ProjectView({ projects }: Props) {
       type: 'bar',
       data: sortedDistricts.map(d => ({
         value: d.amount,
-        itemStyle: { color: d.isTop3 ? '#FAC858' : COLORS.primary, borderRadius: [0, 4, 4, 0] },
+        itemStyle: { color: d.isTop3 ? COLORS.chartYellow : COLORS.primary, borderRadius: [0, 4, 4, 0] },
       })),
       barWidth: 16,
     }],
@@ -348,7 +348,7 @@ export default function ProjectView({ projects }: Props) {
                     { value: newPending, color: COLORS.warning },
                     { value: newSigned, color: COLORS.success },
                     { value: newInProgress, color: COLORS.primary },
-                    { value: newCompleted, color: '#999' },
+                    { value: newCompleted, color: COLORS.textTertiary },
                   ].map((item, i) => (
                     <div key={i} style={{
                       width: `${newProjects > 0 ? (item.value / newProjects) * 100 : 0}%`,

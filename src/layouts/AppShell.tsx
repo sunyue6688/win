@@ -11,7 +11,7 @@ import {
   IconChevronDown,
 } from '@douyinfe/semi-icons'
 import { fmtDateTime } from '../utils/format'
-import { COLORS } from '../styles/theme'
+import { COLORS, SIDEBAR_STYLES, SHADOWS } from '../styles/theme'
 
 const { Sider, Content, Header } = Layout
 
@@ -40,9 +40,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   sales: '销售视角',
 }
 
-const SIDEBAR_WIDTH = 240
-const SIDEBAR_COLLAPSED_WIDTH = 60
-
 export default function AppShell({
   currentPage,
   onPageChange,
@@ -59,7 +56,7 @@ export default function AppShell({
     Toast.info('导出功能开发中...')
   }
 
-  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH
+  const sidebarWidth = collapsed ? SIDEBAR_STYLES.collapsedWidth : SIDEBAR_STYLES.width
 
   return (
     <Layout style={{ minHeight: '100vh', display: 'flex' }}>
@@ -70,11 +67,14 @@ export default function AppShell({
           minWidth: sidebarWidth,
           maxWidth: sidebarWidth,
           flex: '0 0 auto',
-          backgroundColor: '#fff',
+          backgroundColor: SIDEBAR_STYLES.backgroundColor,
           height: '100vh',
-          borderRight: `1px solid ${COLORS.border}`,
+          borderRight: `1px solid ${SIDEBAR_STYLES.borderColor}`,
+          boxShadow: collapsed ? 'none' : SHADOWS.dropdown,
           transition: 'all 0.2s ease',
-          overflow: 'hidden',
+          overflow: 'auto',
+          position: 'sticky',
+          top: 0,
         }}
       >
         {/* 品牌区 */}
@@ -96,13 +96,14 @@ export default function AppShell({
           {collapsed ? '成本' : '成本管理看板'}
         </div>
 
-        {/* 导航菜单 - 使用组件库原生样式 */}
+        {/* 导航菜单 */}
         <Nav
           selectedKeys={[currentPage]}
           collapsed={collapsed}
           style={{
             height: 'calc(100vh - 64px)',
             backgroundColor: 'transparent',
+            overflowY: 'auto',
           }}
           bodyStyle={{ backgroundColor: 'transparent' }}
           items={navItems.map((item) => ({

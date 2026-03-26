@@ -1,29 +1,44 @@
 :root {
   /* Design Guide V7 Colors */
-  --color-primary: #0F172A;
-  --color-secondary: #14C9C9;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #E11D48;
-  --color-info: #3B82F6;
+  --color-primary: #0066ff;
+  --color-secondary: #ff3b30;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-danger: #ff3b30;
+  --color-info: #0066ff;
+  --color-quaternary: #ff9500;
 
   /* Background Colors */
-  --bg-content: #F7F5F2;
+  --bg-content: #fcfcfc;
   --bg-card: #FFFFFF;
   --bg-sidebar: #FFFFFF;
+  --bg-hover: #F9FAFB;
+
+  /* Status Background Colors */
+  --bg-green: #E8F5E9;
+  --bg-red: #FFEBEE;
+  --bg-blue: #E8F2FF;
+  --bg-orange: #FFF4E5;
+  --bg-grey: #F2F4F8;
 
   /* Text Colors */
-  --text-primary: #0F172A;
+  --text-primary: #1d1d1f;
   --text-secondary: #666666;
-  --text-tertiary: #999999;
+  --text-tertiary: #86868b;
 
   /* Border Colors */
-  --border-color: #E5E7EB;
-  --divider-color: #F0F2F5;
+  --border-color: #d2d2d7;
+  --divider-color: #f0f0f0;
+
+  /* Chart Colors */
+  --chart-1: #cbd5e1;  /* 内部人力 - 灰色 */
+  --chart-2: #0066ff;  /* 外采 - 蓝色 */
+  --chart-3: #ff9500;  /* 商务 - 橙色 */
+  --chart-4: #ff3b30;  /* 其他 - 红色 */
 
   /* Fonts */
-  --font-heading: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-body: 'Albert Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-heading: 'Manrope', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Manrope', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: ui-monospace, Consolas, monospace;
 
   /* Spacing Scale */
@@ -34,16 +49,33 @@
   --space-20: 20px;
   --space-24: 24px;
 
-  /* Card Styles */
+  /* Border Radius */
+  --radius-card: 16px;
+  --radius-button: 8px;
+  --radius-badge: 4px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Card Styles (legacy, use --radius-card and --shadow-card) */
   --card-radius: 16px;
   --card-shadow: 0 4px 20px rgba(0,0,0,0.03);
   --card-padding: 24px;
+
+  /* Z-Index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-modal: 1050;
+  --z-tooltip: 1080;
 
   /* Focus Ring */
   --focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
-/* 覆盖 Semi Design 的圆角变量 - 定义在 body 上 */
+/* 覆盖 Semi Design 的设计变量 - 定义在 body 上 */
 body {
   /* 覆盖 Semi 的圆角 */
   --semi-border-radius-extra-small: 4px;
@@ -51,14 +83,36 @@ body {
   --semi-border-radius-medium: 8px;
   --semi-border-radius-large: 12px;
 
-  /* 覆盖字体 */
-  font-family: var(--font-body) !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* 覆盖 Semi 的主色调 */
+  --semi-color-primary: var(--color-primary);
+  --semi-color-primary-hover: #0052cc;
+  --semi-color-primary-active: #003d99;
 
-/* 只覆盖字体，保留 Semi 的 CSS 变量 */
-body {
+  /* 覆盖 Semi 的语义色 */
+  --semi-color-success: var(--color-success);
+  --semi-color-warning: var(--color-warning);
+  --semi-color-danger: var(--color-danger);
+  --semi-color-info: var(--color-info);
+
+  /* 覆盖 Semi 的背景色 */
+  --semi-color-bg-0: var(--bg-card);
+  --semi-color-bg-1: var(--bg-card);
+  --semi-color-bg-2: var(--bg-hover);
+  --semi-color-bg-3: var(--bg-content);
+
+  /* 覆盖 Semi 的边框色 */
+  --semi-color-border: var(--border-color);
+  --semi-color-border-hover: #D1D5DB;
+
+  /* 覆盖 Semi 的文字色 */
+  --semi-color-text-0: var(--text-primary);
+  --semi-color-text-1: var(--text-secondary);
+  --semi-color-text-2: var(--text-tertiary);
+
+  /* 覆盖 Semi 的阴影 */
+  --semi-shadow-elevated: var(--shadow-dropdown);
+
+  /* 覆盖字体 */
   font-family: var(--font-body) !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -164,4 +218,92 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--bg-card);
+}
+
+/* ============================================
+   响应式断点
+   ============================================ */
+:root {
+  /* Breakpoints */
+  --breakpoint-sm: 640px;   /* 移动端 */
+  --breakpoint-md: 768px;   /* 平板竖屏 */
+  --breakpoint-lg: 1024px;  /* 平板横屏/小桌面 */
+  --breakpoint-xl: 1280px;  /* 标准桌面 */
+}
+
+/* 平板及以下 - 侧边栏折叠 */
+@media (max-width: 1024px) {
+  .semi-layout-sider {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+  }
+}
+
+/* 移动端 - 卡片单列 */
+@media (max-width: 768px) {
+  .semi-row {
+    flex-direction: column;
+  }
+  .semi-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    margin-bottom: 16px;
+  }
+  .semi-layout-content {
+    padding: 16px !important;
+  }
+}
+
+/* ============================================
+   交互状态优化
+   ============================================ */
+
+/* 卡片悬停效果 */
+.semi-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.semi-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* 告警卡片悬停上移 */
+.semi-card[style*="borderLeft"]:hover {
+  transform: translateY(-2px);
+}
+
+/* 表格行悬停效果 */
+.semi-table-tbody > .semi-table-row:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* 按钮悬停效果 */
+.semi-button:hover {
+  transform: translateY(-1px);
+}
+
+.semi-button-primary:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+/* 焦点状态优化 */
+:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
+}
+
+.semi-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.semi-input:focus-visible {
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.semi-select:focus-within {
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }

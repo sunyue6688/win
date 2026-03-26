@@ -1,49 +1,54 @@
 /**
  * 成本管理看板 - 主题配置
- * 基于 Design Guide V7 规范
+ * 基于参考设计规范
  */
 
 /**
  * 字体配置
  */
 export const FONTS = {
-  heading: '"Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif',
-  body: '"Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif',
+  heading: '"Manrope", "PingFang SC", "Microsoft YaHei", sans-serif',
+  body: '"Manrope", "PingFang SC", "Microsoft YaHei", sans-serif',
   mono: 'ui-monospace, Consolas, monospace',
 } as const
 
 export const COLORS = {
   // 主色调
-  primary: '#0F172A',
-  secondary: '#14C9C9',
+  primary: '#0066ff',
+  secondary: '#ff3b30',
 
   // 语义色
-  success: '#10B981',
-  warning: '#F59E0B',
-  danger: '#E11D48',
-  info: '#3B82F6',
+  success: '#34c759',
+  warning: '#ff9500',
+  danger: '#ff3b30',
+  info: '#0066ff',
+
+  // 参考设计中的别名
+  tertiary: '#34c759',
+  quaternary: '#ff9500',
 
   // 背景色
   sidebar: '#FFFFFF',
-  content: '#F7F5F2',
+  content: '#fcfcfc',
   card: '#ffffff',
   hover: '#F9FAFB',
 
   // 文字色
-  textPrimary: '#0F172A',
+  textPrimary: '#1d1d1f',
   textSecondary: '#666666',
-  textTertiary: '#999999',
+  textTertiary: '#86868b',
+  onSurfaceVariant: '#86868b',
 
   // 边框色
-  border: '#E5E7EB',
-  divider: '#F0F2F5',
+  border: '#d2d2d7',
+  divider: '#f0f0f0',
 
-  // 图表配色（内部人力灰色、外采蓝色、商务黄色、其他红色）
-  chart: ['#E5E7EB', '#3B82F6', '#F59E0B', '#E11D48'],
-  chartBlue: '#3B82F6',
-  chartCyan: '#14C9C9',
-  chartYellow: '#F59E0B',
-  chartRed: '#E11D48',
+  // 图表配色（与环形图语义一致：内部灰、外采蓝、商务橙、其他红）
+  chart: ['#cbd5e1', '#0066ff', '#ff9500', '#ff3b30'],
+  chartBlue: '#0066ff',
+  chartCyan: '#0066ff',
+  chartYellow: '#ff9500',
+  chartRed: '#ff3b30',
 
   // 状态背景色
   bgGreen: '#E8F5E9',
@@ -54,12 +59,61 @@ export const COLORS = {
 } as const
 
 /**
+ * 阴影配置
+ */
+export const SHADOWS = {
+  card: '0 4px 24px rgba(0, 0, 0, 0.04)',
+  cardHover: '0 8px 30px rgba(0, 0, 0, 0.06)',
+  dropdown: '0 4px 12px rgba(0, 0, 0, 0.08)',
+} as const
+
+/**
+ * 圆角配置
+ */
+export const RADII = {
+  card: 16,
+  button: 8,
+  badge: 4,
+  full: 9999,
+} as const
+
+/**
+ * Z-Index 层级配置
+ */
+export const Z_INDEX = {
+  dropdown: 1000,
+  sticky: 1020,
+  modal: 1050,
+  tooltip: 1080,
+} as const
+
+/**
+ * 响应式断点配置
+ */
+export const BREAKPOINTS = {
+  sm: 640,   /* 移动端 */
+  md: 768,   /* 平板竖屏 */
+  lg: 1024,  /* 平板横屏/小桌面 */
+  xl: 1280,  /* 标准桌面 */
+} as const
+
+/**
+ * 媒体查询字符串
+ */
+export const MEDIA_QUERIES = {
+  sm: `@media (max-width: ${BREAKPOINTS.sm}px)`,
+  md: `@media (max-width: ${BREAKPOINTS.md}px)`,
+  lg: `@media (max-width: ${BREAKPOINTS.lg}px)`,
+  xl: `@media (max-width: ${BREAKPOINTS.xl}px)`,
+} as const
+
+/**
  * 状态颜色映射
  */
 export const STATUS_COLORS: Record<string, { bg: string; text: string; tagColor: string }> = {
-  '进行中': { bg: '#E8F2FF', text: '#3B82F6', tagColor: 'blue' },
-  '已签约': { bg: '#E8F5E9', text: '#10B981', tagColor: 'green' },
-  '待评估': { bg: '#FFF4E5', text: '#F59E0B', tagColor: 'orange' },
+  '进行中': { bg: '#E8F2FF', text: '#0066ff', tagColor: 'blue' },
+  '已签约': { bg: '#E8F5E9', text: '#34c759', tagColor: 'green' },
+  '待评估': { bg: '#FFF4E5', text: '#ff9500', tagColor: 'orange' },
   '已完成': { bg: '#F2F4F8', text: '#9CA3AF', tagColor: 'grey' },
 }
 
@@ -68,13 +122,18 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string; tagColor:
  */
 export const CARD_STYLES = {
   base: {
-    borderRadius: 16,
+    borderRadius: RADII.card,
     backgroundColor: COLORS.card,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-    transition: 'box-shadow 0.2s ease',
+    boxShadow: SHADOWS.card,
+    border: `1px solid ${COLORS.border}`,
+    transition: 'box-shadow 0.2s ease, transform 0.2s ease',
   },
   hover: {
-    boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+    boxShadow: SHADOWS.cardHover,
+    transform: 'translateY(-2px)',
+  },
+  alert: {
+    borderLeft: `4px solid ${COLORS.danger}`,
   },
   header: {
     fontSize: 16,
@@ -91,9 +150,9 @@ export const CARD_STYLES = {
  * 进度条样式
  */
 export const PROGRESS_COLORS = {
-  warning: { from: '#F59E0B', to: '#E11D48' },
-  normal: { from: '#3B82F6', to: '#14C9C9' },
-  good: { from: '#10B981', to: '#14C9C9' },
+  warning: { from: '#ff9500', to: '#ff3b30' },
+  normal: { from: '#0066ff', to: '#0066ff' },
+  good: { from: '#34c759', to: '#34c759' },
 } as const
 
 /**

@@ -52,6 +52,15 @@ export interface PMSummary {
   externalHRRatioLimit: number
 }
 
+export interface CostSubCategory {
+  name: string
+  plan: number
+  actual: number
+  q1: number
+  q2: number
+  description: string
+}
+
 export interface DepartmentOverview {
   year: number
   totalPlanCost: number
@@ -62,6 +71,7 @@ export interface DepartmentOverview {
     category: string
     plan: number
     actual: number
+    subCategories?: CostSubCategory[]
   }[]
   projectStats: {
     total: number
@@ -232,10 +242,45 @@ export function generateOverview(): DepartmentOverview {
     planRevenue,
     actualRevenue,
     costCategories: [
-      { category: '内部人力', plan: Math.round(totalPlanCost * 0.45), actual: totalInternalHR + Math.round(existingTotalCost * 0.45) },
-      { category: '外采人力', plan: Math.round(totalPlanCost * 0.30), actual: totalExternalHR + Math.round(existingTotalCost * 0.30) },
-      { category: '商务费用', plan: Math.round(totalPlanCost * 0.10), actual: totalBusinessCost + Math.round(existingTotalCost * 0.10) },
-      { category: '其他', plan: Math.round(totalPlanCost * 0.15), actual: totalOtherCost + Math.round(existingTotalCost * 0.15) },
+      {
+        category: '内部人力',
+        plan: Math.round(totalPlanCost * 0.45),
+        actual: totalInternalHR + Math.round(existingTotalCost * 0.45),
+        subCategories: [
+          { name: '固定员工工资', plan: Math.round(totalPlanCost * 0.40), actual: Math.round((totalInternalHR + existingTotalCost * 0.40) * 0.9), q1: Math.round((totalInternalHR + existingTotalCost * 0.40) * 0.9 * 0.35), q2: Math.round((totalInternalHR + existingTotalCost * 0.40) * 0.9 * 0.25), description: '23名固定员工工资，固定成本' },
+          { name: '绩效奖金', plan: Math.round(totalPlanCost * 0.05), actual: Math.round((totalInternalHR + existingTotalCost * 0.45) * 0.1), q1: Math.round((totalInternalHR + existingTotalCost * 0.45) * 0.1 * 0.35), q2: Math.round((totalInternalHR + existingTotalCost * 0.45) * 0.1 * 0.25), description: '按绩效发放' },
+        ],
+      },
+      {
+        category: '外采人力',
+        plan: Math.round(totalPlanCost * 0.30),
+        actual: totalExternalHR + Math.round(existingTotalCost * 0.30),
+        subCategories: [
+          { name: '外包研发', plan: Math.round(totalPlanCost * 0.18), actual: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.6), q1: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.6 * 0.35), q2: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.6 * 0.25), description: '项目外部研发，设项目级限额' },
+          { name: '外包测试', plan: Math.round(totalPlanCost * 0.08), actual: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.25), q1: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.25 * 0.35), q2: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.25 * 0.25), description: '项目外部测试' },
+          { name: '其他外采', plan: Math.round(totalPlanCost * 0.04), actual: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.15), q1: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.15 * 0.35), q2: Math.round((totalExternalHR + existingTotalCost * 0.30) * 0.15 * 0.25), description: '其他外采服务' },
+        ],
+      },
+      {
+        category: '商务费用',
+        plan: Math.round(totalPlanCost * 0.10),
+        actual: totalBusinessCost + Math.round(existingTotalCost * 0.10),
+        subCategories: [
+          { name: '业务招待', plan: Math.round(totalPlanCost * 0.05), actual: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.5), q1: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.5 * 0.35), q2: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.5 * 0.25), description: '销售请客、送礼等' },
+          { name: '差旅费用', plan: Math.round(totalPlanCost * 0.03), actual: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.3), q1: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.3 * 0.35), q2: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.3 * 0.25), description: '出差交通住宿' },
+          { name: '会议费用', plan: Math.round(totalPlanCost * 0.02), actual: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.2), q1: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.2 * 0.35), q2: Math.round((totalBusinessCost + existingTotalCost * 0.10) * 0.2 * 0.25), description: '会议组织费用' },
+        ],
+      },
+      {
+        category: '其他',
+        plan: Math.round(totalPlanCost * 0.15),
+        actual: totalOtherCost + Math.round(existingTotalCost * 0.15),
+        subCategories: [
+          { name: '媒体宣传', plan: Math.round(totalPlanCost * 0.05), actual: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.35), q1: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.35 * 0.35), q2: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.35 * 0.25), description: '媒体宣传费用' },
+          { name: '招投标专家费', plan: Math.round(totalPlanCost * 0.04), actual: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.25), q1: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.25 * 0.35), q2: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.25 * 0.25), description: '招投标评审专家费' },
+          { name: '办公杂费', plan: Math.round(totalPlanCost * 0.06), actual: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.4), q1: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.4 * 0.35), q2: Math.round((totalOtherCost + existingTotalCost * 0.15) * 0.4 * 0.25), description: '日常办公杂费' },
+        ],
+      },
     ],
     projectStats: {
       total: projects.length,

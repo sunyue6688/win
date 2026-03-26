@@ -1,8 +1,9 @@
-import { Card, Row, Col, Tag, Progress } from '@douyinfe/semi-ui'
+import { Card, Progress, Table } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
 import type { DepartmentOverview } from '../mockData'
 import { fmtAmount, fmtAmountWan, calcPct, getTrend } from '../utils/format'
-import { COLORS, CARD_STYLES, TEXT_STYLES, PROGRESS_COLORS } from '../styles/theme'
+import { COLORS, CARD_STYLES, TEXT_STYLES } from '../styles/theme'
+import type { ColumnProps } from '@douyinfe/semi-ui/lib/es/table'
 
 interface Props {
   overview: DepartmentOverview
@@ -21,13 +22,7 @@ export default function Dashboard({ overview }: Props) {
   const totalTrend = getTrend(overview.totalActualCost, overview.totalPlanCost)
   const revenueTrend = getTrend(overview.actualRevenue, overview.planRevenue)
 
-  const getBarGradient = (pct: number, isOverCost: boolean = false) => {
-    if (isOverCost || pct > 100) return { from: '#E11D48', to: '#FB7185' }
-    if (pct >= 80) return PROGRESS_COLORS.normal
-    return PROGRESS_COLORS.warning
-  }
-
-  // 环形图 — 直接显示百分比和金额
+  // 环形图
   const costPieOption = {
     tooltip: {
       trigger: 'item',
@@ -56,6 +51,53 @@ export default function Dashboard({ overview }: Props) {
     }],
   }
 
+  // 堆叠柱状图 - 成本趋势（控制金额 vs 实际消耗）
+  const categories = overview.costCategories
+  const costTrendOption = {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: COLORS.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      formatter: (params: { seriesName: string; value: number; name: string }[]) => {
+        let html = `<strong>${params[0].name}</strong><br/>`
+        params.forEach(p => {
+          html += `${p.seriesName}: ${p.value} 万<br/>`
+        })
+        return html
+      },
+    },
+    legend: {
+      bottom: 0,
+      textStyle: { fontSize: 12, color: COLORS.textSecondary },
+    },
+    grid: { left: 50, right: 20, top: 20, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      data: ['控制金额', '实际消耗'],
+      axisLine: { lineStyle: { color: COLORS.border } },
+      axisLabel: { color: COLORS.textSecondary },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      axisLabel: { formatter: '{value} 万', color: COLORS.textTertiary, fontSize: 11 },
+      splitLine: { lineStyle: { color: COLORS.divider, type: 'dashed' } },
+    },
+    series: categories.map((cat, i) => ({
+      name: cat.category,
+      type: 'bar',
+      stack: 'cost',
+      barWidth: 60,
+      itemStyle: { color: COLORS.chart[i], borderRadius: i === categories.length - 1 ? [4, 4, 0, 0] : 0 },
+      data: [
+        Math.round(cat.plan / 10000),
+        Math.round(cat.actual / 10000),
+      ],
+    })),
+  }
+
   // 判断是否超出成本
   const isOverCost = totalPct > 100
 
@@ -63,8 +105,8 @@ export default function Dashboard({ overview }: Props) {
     <div>
       {/* 第一行：警示横幅 */}
       <div style={{
-        backgroundColor: '#FFEBEE',
-        border: '1px solid #FECACA',
+        backgroundColor: COLORS.bgRed,
+        border: `1px solid ${COLORS.danger}30`,
         borderRadius: 8,
         padding: '12px 20px',
         marginBottom: 16,
@@ -72,169 +114,342 @@ export default function Dashboard({ overview }: Props) {
         alignItems: 'center',
         gap: 8,
         fontSize: 14,
-        color: '#E11D48',
+        color: COLORS.danger,
       }}>
         <span style={{ fontSize: 16 }}>⚠️</span>
         <span>当前有3个项目外采成本即将超出外采成本线，请关注</span>
       </div>
 
-      {/* 第二行：4个KPI卡片等宽等高 */}
-      <Row gutter={24} style={{ marginBottom: 16, display: 'flex' }}>
-        {/* 年度收入 */}
-        <Col span={6} style={{ display: 'flex' }}>
-          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
-            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={TEXT_STYLES.caption}>年度收入</span>
-              <span style={{ fontSize: 12, color: revenueTrend.color, fontWeight: 600 }}>{revenueTrend.icon} {revenueTrend.text}</span>
-            </div>
-            <div style={{ ...TEXT_STYLES.valueLarge, color: COLORS.primary, marginBottom: 12 }}>
-              {fmtAmount(overview.actualRevenue)}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: COLORS.textTertiary, marginBottom: 12 }}>
-              <span>计划 {fmtAmount(overview.planRevenue)}</span>
-              <span>{calcPct(overview.actualRevenue, overview.planRevenue)}%</span>
-            </div>
-            <div style={{ height: 8, borderRadius: 4, backgroundColor: COLORS.border, overflow: 'hidden' }}>
-              <div style={{
-                width: `${Math.min(calcPct(overview.actualRevenue, overview.planRevenue), 100)}%`, height: '100%', borderRadius: 4,
-                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.secondary})`, transition: 'width 0.3s ease',
-              }} />
-            </div>
-          </Card>
-        </Col>
+      {/* 第二行：KPI 卡片（横向排列） */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
+        {/* 总收入 */}
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: 16,
+          padding: '16px 20px',
+          border: `1px solid ${COLORS.border}`,
+          borderLeft: `4px solid ${COLORS.primary}`,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}>
+          <span style={{ color: COLORS.textTertiary, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>总收入</span>
+          <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: COLORS.textPrimary }}>
+            {fmtAmount(overview.actualRevenue)}
+            <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: COLORS.textTertiary }}>万元</span>
+          </div>
+          <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: COLORS.tertiary, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 14 }}>↑</span>
+            {revenueTrend.text}
+            <span style={{ fontWeight: 500, marginLeft: 4, color: COLORS.textTertiary }}>较上季度环比</span>
+          </div>
+        </div>
 
-        {/* 年度成本（突出显示） */}
-        <Col span={6} style={{ display: 'flex' }}>
-          <Card style={{ ...CARD_STYLES.base, flex: 1, borderLeft: '4px solid #E11D48' }} bodyStyle={{ padding: 20 }}>
-            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={TEXT_STYLES.caption}>年度成本</span>
-              <span style={{ fontSize: 12, color: totalTrend.color, fontWeight: 600 }}>{totalTrend.icon} {totalTrend.text}</span>
-            </div>
-            <div style={{ ...TEXT_STYLES.valueLarge, color: isOverCost ? '#E11D48' : COLORS.danger, marginBottom: 12 }}>
-              {fmtAmount(overview.totalActualCost)}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: COLORS.textTertiary, marginBottom: 12 }}>
-              <span>计划 {fmtAmount(overview.totalPlanCost)}</span>
-              <span style={{ fontWeight: 600, color: isOverCost ? '#E11D48' : COLORS.success }}>{totalPct}%</span>
-            </div>
-            <div style={{ height: 8, borderRadius: 4, backgroundColor: isOverCost ? '#FFE4E6' : COLORS.danger + '30', overflow: 'hidden' }}>
-              <div style={{
-                width: `${Math.min(totalPct, 100)}%`, height: '100%', borderRadius: 4,
-                background: `linear-gradient(90deg, ${isOverCost ? '#E11D48' : COLORS.danger}, ${isOverCost ? '#FB7185' : COLORS.danger}cc)`, transition: 'width 0.3s ease',
-              }} />
-            </div>
-          </Card>
-        </Col>
+        {/* 总成本 */}
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: 16,
+          padding: '16px 20px',
+          border: `1px solid ${COLORS.border}`,
+          borderLeft: `4px solid ${COLORS.danger}`,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}>
+          <span style={{ color: COLORS.textTertiary, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>总成本</span>
+          <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: COLORS.textPrimary }}>
+            {fmtAmount(overview.totalActualCost)}
+            <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: COLORS.textTertiary }}>万</span>
+          </div>
+          <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: isOverCost ? COLORS.danger : COLORS.warning, display: 'flex', alignItems: 'center', gap: 4 }}>
+            ⚠️ {isOverCost ? `超出预算 ${totalPct - 100}%` : `占比 ${totalPct}%`}
+          </div>
+        </div>
 
-        {/* 年度利润 */}
-        <Col span={6} style={{ display: 'flex' }}>
-          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
-            <div style={{ marginBottom: 12 }}><span style={TEXT_STYLES.caption}>年度利润</span></div>
-            <div style={{ ...TEXT_STYLES.valueLarge, color: COLORS.secondary, marginBottom: 12 }}>
-              {fmtAmountWan(overview.actualRevenue - overview.totalActualCost)}
-            </div>
-            <div style={{ fontSize: 12, color: COLORS.textTertiary }}>
-              收入 {fmtAmountWan(overview.actualRevenue)} - 成本 {fmtAmountWan(overview.totalActualCost)}
-            </div>
-          </Card>
-        </Col>
+        {/* 净利润 */}
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: 16,
+          padding: '16px 20px',
+          border: `1px solid ${COLORS.border}`,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}>
+          <span style={{ color: COLORS.textTertiary, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>净利润</span>
+          <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: COLORS.textPrimary }}>
+            {fmtAmountWan(overview.actualRevenue - overview.totalActualCost)}
+            <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: COLORS.textTertiary }}>万</span>
+          </div>
+          <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: COLORS.tertiary }}>
+            同比增长 18%
+          </div>
+        </div>
 
-        {/* 年度利润率 */}
-        <Col span={6} style={{ display: 'flex' }}>
-          <Card style={{ ...CARD_STYLES.base, flex: 1 }} bodyStyle={{ padding: 20 }}>
-            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={TEXT_STYLES.caption}>年度利润率</span>
-              {profitRate >= planProfitRate
-                ? <span style={{ fontSize: 12, color: COLORS.success, fontWeight: 600 }}>↑ 达标</span>
-                : <span style={{ fontSize: 12, color: '#E11D48', fontWeight: 600 }}>↓ 未达标</span>
-              }
-            </div>
-            <div style={{ ...TEXT_STYLES.valueLarge, color: profitRate >= planProfitRate ? COLORS.success : '#E11D48', marginBottom: 8 }}>
-              {profitRate.toFixed(1)}%
-            </div>
-            <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 8 }}>
-              计划利润率 {planProfitRate.toFixed(1)}%
-            </div>
-            <Progress
-              percent={profitRate}
-              stroke={profitRate >= planProfitRate ? COLORS.success : '#E11D48'}
-              showInfo={false}
-              style={{ height: 8, borderRadius: 4 }}
-            />
-          </Card>
-        </Col>
-      </Row>
+        {/* 利润率 */}
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: 16,
+          padding: '16px 20px',
+          border: `1px solid ${COLORS.border}`,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}>
+          <span style={{ color: COLORS.textTertiary, fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>利润率</span>
+          <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: COLORS.textPrimary }}>
+            {profitRate.toFixed(1)}%
+          </div>
+          <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: COLORS.primary }}>
+            优于行业基准
+          </div>
+        </div>
+      </div>
 
-      {/* 第三行：1:2比例等高 - 成本结构饼图 + 成本分类明细表格 */}
-      <Row gutter={24}>
+      {/* 第三行：成本结构 + 成本趋势 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 16 }}>
         {/* 左侧：成本结构饼图 */}
-        <Col span={8}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
-            <div style={TEXT_STYLES.cardTitle}>成本结构</div>
-            <ReactECharts option={costPieOption} style={{ height: 260 }} opts={{ renderer: 'svg' }} />
-          </Card>
-        </Col>
+        <Card style={{ ...CARD_STYLES.base, height: 360 }} bodyStyle={{ padding: 20 }}>
+          <div style={TEXT_STYLES.cardTitle}>成本结构</div>
+          <ReactECharts option={costPieOption} style={{ height: 260 }} opts={{ renderer: 'svg' }} />
+        </Card>
 
-        {/* 右侧：成本分类明细表格 */}
-        <Col span={16}>
-          <Card style={{ ...CARD_STYLES.base, marginBottom: 16, height: 360 }} bodyStyle={{ padding: 20 }}>
-            <div style={TEXT_STYLES.cardTitle}>成本分类明细</div>
-            <div style={{ overflow: 'auto', height: 280, marginTop: 16 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 600 }}>
-                <thead>
-                  <tr style={{ borderBottom: `2px solid ${COLORS.border}`, position: 'sticky', top: 0, background: '#F9FAFB' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', color: COLORS.textTertiary, fontWeight: 500, whiteSpace: 'nowrap' }}>成本类型</th>
-                    <th style={{ textAlign: 'right', padding: '10px 8px', color: COLORS.textTertiary, fontWeight: 500, whiteSpace: 'nowrap' }}>计划金额（万元）</th>
-                    <th style={{ textAlign: 'right', padding: '10px 8px', color: COLORS.textTertiary, fontWeight: 500, whiteSpace: 'nowrap' }}>实际金额（万元）</th>
-                    <th style={{ textAlign: 'right', padding: '10px 8px', color: COLORS.textTertiary, fontWeight: 500, whiteSpace: 'nowrap' }}>剩余金额（万元）</th>
-                    <th style={{ textAlign: 'center', padding: '10px 8px', color: COLORS.textTertiary, fontWeight: 500, whiteSpace: 'nowrap' }}>已使用占比</th>
-                    <th style={{ width: 200, padding: '10px 8px', whiteSpace: 'nowrap' }}></th>
-                    <th style={{ textAlign: 'center', padding: '10px 8px', color: COLORS.textTertiary, fontWeight: 500, whiteSpace: 'nowrap' }}>推测预警</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overview.costCategories.map((c, i) => {
-                    const remaining = c.plan - c.actual
-                    const usagePct = c.plan > 0 ? Math.round((c.actual / c.plan) * 100) : 0
-                    const isOverCategoryCost = usagePct > 100
-                    const progressGradient = getBarGradient(usagePct, isOverCategoryCost)
+        {/* 右侧：成本趋势堆叠柱状图 */}
+        <Card style={{ ...CARD_STYLES.base, height: 360 }} bodyStyle={{ padding: 20 }}>
+          <div style={TEXT_STYLES.cardTitle}>成本趋势</div>
+          <ReactECharts option={costTrendOption} style={{ height: 280 }} opts={{ renderer: 'svg' }} />
+        </Card>
+      </div>
 
-                    return (
-                      <tr key={c.category} style={{ borderBottom: `1px solid ${COLORS.divider}`, transition: 'background-color 0.2s ease' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.hover}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                        <td style={{ padding: '14px 8px' }}>
-                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: COLORS.chart[i], marginRight: 8 }} />
-                          {c.category}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '14px 8px' }}>{(c.plan / 10000).toFixed(2)}</td>
-                        <td style={{ textAlign: 'right', padding: '14px 8px', fontWeight: 600, color: isOverCategoryCost ? '#E11D48' : COLORS.textPrimary }}>
-                          {(c.actual / 10000).toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '14px 8px', color: remaining >= 0 ? COLORS.success : '#E11D48' }}>
-                          {(remaining / 10000).toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '14px 8px' }}>
-                          <Tag color={isOverCategoryCost ? 'red' : usagePct > 90 ? 'orange' : 'green'}>{usagePct}%</Tag>
-                        </td>
-                        <td style={{ padding: '14px 8px' }}>
-                          <div style={{ height: 8, borderRadius: 4, backgroundColor: isOverCategoryCost ? '#FFE4E6' : COLORS.border, overflow: 'hidden' }}>
-                            <div style={{
-                              width: `${Math.min(usagePct, 100)}%`, height: '100%', borderRadius: 4,
-                              background: `linear-gradient(90deg, ${progressGradient.from}, ${progressGradient.to})`,
-                            }} />
-                          </div>
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '14px 8px', color: COLORS.textTertiary }}>—</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+      {/* 第四行：成本分类明细表格 */}
+      <Card style={CARD_STYLES.base} bodyStyle={{ padding: '20px 24px' }}>
+        <div style={TEXT_STYLES.cardTitle}>成本分类明细</div>
+        <CostCategoryTable data={overview.costCategories} />
+      </Card>
+    </div>
+  )
+}
+
+// 成本分类明细表格组件
+interface CostCategoryRow {
+  key: string
+  category: string
+  plan: number
+  actual: number
+  usagePct: number
+  q1: number
+  q2: number
+  current: number
+  remaining: number
+  colorIndex: number
+  subCategories?: {
+    key: string
+    name: string
+    plan: number
+    actual: number
+    usagePct: number
+    q1: number
+    q2: number
+    current: number
+    remaining: number
+  }[]
+}
+
+function CostCategoryTable({ data }: { data: DepartmentOverview['costCategories'] }) {
+  const tableData: CostCategoryRow[] = data.map((c, i) => {
+    const usagePct = c.plan > 0 ? Math.round((c.actual / c.plan) * 100) : 0
+    const q1 = Math.round(c.actual * 0.35 / 10000)
+    const q2 = Math.round(c.actual * 0.25 / 10000)
+    const current = Math.round(c.actual / 10000)
+    const remaining = Math.round((c.plan - c.actual) / 10000)
+    return {
+      key: c.category,
+      category: c.category,
+      plan: c.plan,
+      actual: c.actual,
+      usagePct,
+      q1,
+      q2,
+      current,
+      remaining,
+      colorIndex: i,
+      subCategories: c.subCategories?.map((sub, si) => ({
+        key: `${c.category}-${si}`,
+        name: sub.name,
+        plan: sub.plan,
+        actual: sub.actual,
+        usagePct: sub.plan > 0 ? Math.round((sub.actual / sub.plan) * 100) : 0,
+        q1: Math.round(sub.q1 / 10000),
+        q2: Math.round(sub.q2 / 10000),
+        description: sub.description,
+      })),
+    }
+  })
+
+  const columns: ColumnProps<CostCategoryRow>[] = [
+    {
+      title: '成本类型',
+      dataIndex: 'category',
+      width: 180,
+      render: (text, record) => (
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: COLORS.chart[record.colorIndex], marginRight: 8 }} />
+          <span style={{ fontWeight: 600, color: COLORS.textPrimary }}>{text}</span>
+        </span>
+      ),
+    },
+    {
+      title: '控制总金额（万元）',
+      dataIndex: 'plan',
+      width: 140,
+      align: 'right',
+      render: (val) => <span style={{ fontWeight: 500, color: COLORS.textSecondary }}>{(val / 10000).toFixed(2)}</span>,
+    },
+    {
+      title: '使用进度',
+      width: 140,
+      render: (_: unknown, record: CostCategoryRow) => {
+        const color = record.usagePct > 100 ? COLORS.danger : record.usagePct >= 80 ? COLORS.warning : COLORS.success
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Progress
+              percent={Math.min(record.usagePct, 100)}
+              size="small"
+              showInfo={false}
+              stroke={color}
+              style={{ flex: 1, height: 8, borderRadius: 4 }}
+            />
+            <span style={{ fontSize: 12, fontWeight: 700, color, minWidth: 40 }}>{record.usagePct}%</span>
+          </div>
+        )
+      },
+    },
+    {
+      title: 'Q1消耗（万元）',
+      dataIndex: 'q1',
+      width: 120,
+      align: 'right',
+      render: (val) => val.toFixed(2),
+    },
+    {
+      title: 'Q2消耗（万元）',
+      dataIndex: 'q2',
+      width: 120,
+      align: 'right',
+      render: (val) => val.toFixed(2),
+    },
+    {
+      title: '当前消耗（万元）',
+      dataIndex: 'current',
+      width: 130,
+      align: 'right',
+      render: (val, record) => {
+        const isOver = record.usagePct > 100
+        return <span style={{ fontWeight: 700, color: isOver ? COLORS.danger : COLORS.textPrimary }}>{val.toFixed(2)}</span>
+      },
+    },
+    {
+      title: '剩余可使用（万元）',
+      dataIndex: 'remaining',
+      width: 130,
+      align: 'right',
+      render: (val) => <span style={{ fontWeight: 700, color: val >= 0 ? COLORS.success : COLORS.danger }}>{val.toFixed(2)}</span>,
+    },
+  ]
+
+  // 展开行渲染
+  const expandedRowRender = (record: CostCategoryRow | undefined) => {
+    if (!record || !record.subCategories || record.subCategories.length === 0) return null
+
+    const subColumns: ColumnProps<typeof record.subCategories[0]>[] = [
+      {
+        title: '二级分类',
+        dataIndex: 'name',
+        width: 180,
+        render: (text) => (
+          <span style={{ paddingLeft: 24, fontWeight: 500, color: COLORS.textSecondary }}>{text}</span>
+        ),
+      },
+      {
+        title: '控制总金额（万元）',
+        dataIndex: 'plan',
+        width: 140,
+        align: 'right',
+        render: (val) => <span style={{ color: COLORS.textTertiary }}>{(val / 10000).toFixed(2)}</span>,
+      },
+      {
+        title: '使用进度',
+        width: 140,
+        render: (_: unknown, subRecord: { usagePct: number }) => {
+          const color = subRecord.usagePct > 100 ? COLORS.danger : subRecord.usagePct >= 80 ? COLORS.warning : COLORS.success
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Progress percent={Math.min(subRecord.usagePct, 100)} size="small" showInfo={false}
+                stroke={color} style={{ flex: 1, height: 6, borderRadius: 3 }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color, minWidth: 36 }}>{subRecord.usagePct}%</span>
             </div>
-          </Card>
-        </Col>
-      </Row>
+          )
+        },
+      },
+      {
+        title: 'Q1消耗（万元）',
+        dataIndex: 'q1',
+        width: 120,
+        align: 'right',
+        render: (val: number) => val.toFixed(2),
+      },
+      {
+        title: 'Q2消耗（万元）',
+        dataIndex: 'q2',
+        width: 120,
+        align: 'right',
+        render: (val: number) => val.toFixed(2),
+      },
+      {
+        title: '说明',
+        dataIndex: 'description',
+        width: 180,
+        render: (text) => <span style={{ color: COLORS.textTertiary, fontSize: 12 }}>{text}</span>,
+      },
+    ]
+
+    return (
+      <Table
+        columns={subColumns}
+        dataSource={record.subCategories}
+        pagination={false}
+        showHeader={false}
+        style={{ backgroundColor: '#FAFBFC' }}
+      />
+    )
+  }
+
+  return (
+    <div style={{ marginTop: 16, height: 280, overflow: 'auto' }}>
+      <style>{`
+        .cost-table .semi-table-thead {
+          background: transparent;
+        }
+        .cost-table .semi-table-thead th {
+          background: transparent !important;
+          border-bottom: none;
+          font-weight: 500;
+        }
+      `}</style>
+      <Table
+        className="cost-table"
+        columns={columns}
+        dataSource={tableData}
+        pagination={false}
+        expandedRowRender={expandedRowRender}
+        rowKey="key"
+        hideExpandedColumn={false}
+        style={{ border: 'none' }}
+      />
     </div>
   )
 }
