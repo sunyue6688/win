@@ -1,79 +1,89 @@
 /**
  * 成本管理看板 - 主题配置
- * 基于参考设计规范
+ * 明亮专业风格，适合企业成本管理场景
  */
 
 /**
  * 字体配置
  */
 export const FONTS = {
-  heading: '"Manrope", "PingFang SC", "Microsoft YaHei", sans-serif',
-  body: '"Manrope", "PingFang SC", "Microsoft YaHei", sans-serif',
+  heading: '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif',
+  body: '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif',
   mono: 'ui-monospace, Consolas, monospace',
 } as const
 
 export const COLORS = {
-  // 主色调
-  primary: '#0066ff',
-  secondary: '#ff3b30',
+  // 主色调 - 明亮蓝
+  primary: '#1E40AF',
+  primaryLight: '#3B82F6',
+  primaryDark: '#1E3A8A',
 
   // 语义色
-  success: '#34c759',
-  warning: '#ff9500',
-  danger: '#ff3b30',
-  info: '#0066ff',
+  success: '#16A34A',
+  successLight: '#22C55E',
+  warning: '#D97706',
+  warningLight: '#F59E0B',
+  danger: '#DC2626',
+  dangerLight: '#EF4444',
+  info: '#1E40AF',
 
   // 参考设计中的别名
-  tertiary: '#34c759',
-  quaternary: '#ff9500',
+  tertiary: '#16A34A',
+  quaternary: '#D97706',
 
-  // 背景色
+  // 背景色 - 明亮干净
   sidebar: '#FFFFFF',
-  content: '#fcfcfc',
-  card: '#ffffff',
-  hover: '#F9FAFB',
+  content: '#F8FAFC',
+  card: '#FFFFFF',
+  hover: '#F1F5F9',
 
   // 文字色
-  textPrimary: '#1d1d1f',
-  textSecondary: '#666666',
-  textTertiary: '#86868b',
-  onSurfaceVariant: '#86868b',
+  textPrimary: '#1E293B',
+  textSecondary: '#475569',
+  textTertiary: '#94A3B8',
+  onSurfaceVariant: '#64748B',
 
   // 边框色
-  border: '#d2d2d7',
-  divider: '#f0f0f0',
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
+  divider: '#E2E8F0',
 
-  // 图表配色（与环形图语义一致：内部灰、外采蓝、商务橙、其他红）
-  chart: ['#cbd5e1', '#0066ff', '#ff9500', '#ff3b30'],
-  chartBlue: '#0066ff',
-  chartCyan: '#0066ff',
-  chartYellow: '#ff9500',
-  chartRed: '#ff3b30',
+  // 图表配色 - 统一蓝色系，避免杂乱
+  chart: ['#94A3B8', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE'],
+  chartPrimary: '#3B82F6',
+  chartSecondary: '#94A3B8',
+  chartTertiary: '#CBD5E1',
+  // 语义色 - 仅用于状态指示，不用于图表主色
+  chartSuccess: '#22C55E',
+  chartWarning: '#F59E0B',
+  chartDanger: '#EF4444',
 
   // 状态背景色
-  bgGreen: '#E8F5E9',
-  bgRed: '#FFEBEE',
-  bgBlue: '#E8F2FF',
-  bgOrange: '#FFF4E5',
-  bgGrey: '#F2F4F8',
+  bgGreen: '#DCFCE7',
+  bgRed: '#FEE2E2',
+  bgBlue: '#DBEAFE',
+  bgOrange: '#FEF3C7',
+  bgGrey: '#F1F5F9',
 } as const
 
 /**
- * 阴影配置
+ * 阴影配置 - 更有层次感
  */
 export const SHADOWS = {
-  card: '0 4px 24px rgba(0, 0, 0, 0.04)',
-  cardHover: '0 8px 30px rgba(0, 0, 0, 0.06)',
-  dropdown: '0 4px 12px rgba(0, 0, 0, 0.08)',
+  card: '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
+  cardHover: '0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+  dropdown: '0 4px 16px rgba(0, 0, 0, 0.12)',
+  elevated: '0 8px 24px rgba(0, 0, 0, 0.12)',
 } as const
 
 /**
- * 圆角配置
+ * 圆角配置 - 更精致
  */
 export const RADII = {
-  card: 16,
+  card: 12,
+  cardLarge: 16,
   button: 8,
-  badge: 4,
+  badge: 6,
   full: 9999,
 } as const
 
@@ -91,10 +101,10 @@ export const Z_INDEX = {
  * 响应式断点配置
  */
 export const BREAKPOINTS = {
-  sm: 640,   /* 移动端 */
-  md: 768,   /* 平板竖屏 */
-  lg: 1024,  /* 平板横屏/小桌面 */
-  xl: 1280,  /* 标准桌面 */
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
 } as const
 
 /**
@@ -111,10 +121,10 @@ export const MEDIA_QUERIES = {
  * 状态颜色映射
  */
 export const STATUS_COLORS: Record<string, { bg: string; text: string; tagColor: string }> = {
-  '进行中': { bg: '#E8F2FF', text: '#0066ff', tagColor: 'blue' },
-  '已签约': { bg: '#E8F5E9', text: '#34c759', tagColor: 'green' },
-  '待评估': { bg: '#FFF4E5', text: '#ff9500', tagColor: 'orange' },
-  '已完成': { bg: '#F2F4F8', text: '#9CA3AF', tagColor: 'grey' },
+  '进行中': { bg: '#DBEAFE', text: '#1E40AF', tagColor: 'blue' },
+  '已签约': { bg: '#DCFCE7', text: '#16A34A', tagColor: 'green' },
+  '待评估': { bg: '#FEF3C7', text: '#D97706', tagColor: 'orange' },
+  '已完成': { bg: '#F1F5F9', text: '#64748B', tagColor: 'grey' },
 }
 
 /**
@@ -136,13 +146,13 @@ export const CARD_STYLES = {
     borderLeft: `4px solid ${COLORS.danger}`,
   },
   header: {
-    fontSize: 16,
-    fontWeight: 500,
+    fontSize: 15,
+    fontWeight: 600,
     color: COLORS.textPrimary,
     marginBottom: 16,
   },
   body: {
-    padding: 24,
+    padding: 20,
   },
 } as const
 
@@ -150,9 +160,9 @@ export const CARD_STYLES = {
  * 进度条样式
  */
 export const PROGRESS_COLORS = {
-  warning: { from: '#ff9500', to: '#ff3b30' },
-  normal: { from: '#0066ff', to: '#0066ff' },
-  good: { from: '#34c759', to: '#34c759' },
+  warning: { from: '#F59E0B', to: '#D97706' },
+  normal: { from: '#3B82F6', to: '#1E40AF' },
+  good: { from: '#22C55E', to: '#16A34A' },
 } as const
 
 /**
@@ -160,12 +170,12 @@ export const PROGRESS_COLORS = {
  */
 export const TEXT_STYLES = {
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 600,
     color: COLORS.textPrimary,
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 600,
     color: COLORS.textPrimary,
   },
@@ -176,18 +186,25 @@ export const TEXT_STYLES = {
   },
   caption: {
     fontSize: 12,
-    fontWeight: 400,
+    fontWeight: 500,
     color: COLORS.textTertiary,
   },
   value: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 700,
     color: COLORS.textPrimary,
   },
   valueLarge: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 700,
     color: COLORS.textPrimary,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: COLORS.textTertiary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
   },
 } as const
 
@@ -197,10 +214,10 @@ export const TEXT_STYLES = {
 export const SIDEBAR_STYLES = {
   width: 240,
   collapsedWidth: 64,
-  itemHeight: 48,
+  itemHeight: 44,
   backgroundColor: COLORS.sidebar,
-  hoverBackground: '#F3F4F6',
-  activeBorder: `4px solid ${COLORS.info}`,
+  hoverBackground: COLORS.hover,
+  activeBorder: `3px solid ${COLORS.primary}`,
   borderColor: COLORS.border,
 } as const
 
@@ -208,8 +225,21 @@ export const SIDEBAR_STYLES = {
  * 表格样式
  */
 export const TABLE_STYLES = {
-  headerBg: '#F9FAFB',
-  rowHeight: 56,
+  headerBg: '#F8FAFC',
+  rowHeight: 52,
   hoverBg: COLORS.hover,
   borderColor: COLORS.border,
+} as const
+
+/**
+ * 间距配置
+ */
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
 } as const

@@ -31,9 +31,9 @@ export function getCardStyle(options?: {
  * 进度条颜色配置
  */
 export const PROGRESS_GRADIENTS: Record<string, { from: string; to: string }> = {
-  normal: { from: COLORS.info, to: COLORS.secondary },
+  normal: { from: COLORS.info, to: COLORS.primaryLight },
   warning: { from: COLORS.warning, to: COLORS.danger },
-  success: { from: COLORS.success, to: COLORS.secondary },
+  success: { from: COLORS.success, to: COLORS.successLight },
   danger: { from: COLORS.danger, to: '#FB7185' },
 }
 
