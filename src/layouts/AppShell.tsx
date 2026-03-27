@@ -9,6 +9,7 @@ import {
   IconDownload,
   IconUser,
   IconChevronDown,
+  IconAIFilledLevel1,
   IconBolt,
 } from '@douyinfe/semi-icons'
 import { fmtDateTime } from '../utils/format'
@@ -266,7 +267,7 @@ export default function AppShell({
         </Content>
       </Layout>
 
-      {/* AI 悬浮按钮 */}
+      {/* AI 悬浮按钮 - Semi Design AI colorful 风格 */}
       <div
         onClick={handleAiClick}
         style={{
@@ -276,25 +277,25 @@ export default function AppShell({
           width: 56,
           height: 56,
           borderRadius: '50%',
-          backgroundColor: COLORS.primary,
-          boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
+          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%)',
+          boxShadow: '0 4px 16px rgba(139, 92, 246, 0.4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
+          transition: 'all 0.25s ease',
           zIndex: 1000,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.1)'
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(30, 64, 175, 0.5)'
+          e.currentTarget.style.boxShadow = '0 6px 24px rgba(139, 92, 246, 0.5)'
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1)'
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.4)'
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(139, 92, 246, 0.4)'
         }}
       >
-        <IconBolt size="extra-large" style={{ color: '#fff' }} />
+        <IconAIFilledLevel1 style={{ fontSize: 28, color: '#fff' }} />
       </div>
 
       {/* AI 对话框（占位符） */}

@@ -122,22 +122,20 @@ export default function ProjectView({ projects }: Props) {
     },
     {
       title: '交付成本占比',
-      width: 100,
+      width: 110,
       render: (_: unknown, record: PMSummary & { isTotalRow?: boolean }) => {
-        if (record.isTotalRow) {
-          return <span style={{ fontWeight: 600 }}>{record.deliveryCostRatio.toFixed(1)}%</span>
-        }
         const overLimit = record.deliveryCostRatio > 30
         return (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '4px 8px', borderRadius: 4,
+            padding: '2px 6px', borderRadius: 4, minWidth: 60,
+            justifyContent: 'center',
             backgroundColor: overLimit ? COLORS.bgRed : COLORS.bgGreen,
           }}>
             <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
               {record.deliveryCostRatio.toFixed(1)}%
             </span>
-            {overLimit && <AlertIconSmall />}
+            {overLimit && !record.isTotalRow && <AlertIconSmall />}
           </div>
         )
       },
@@ -147,12 +145,10 @@ export default function ProjectView({ projects }: Props) {
       width: 100,
       render: (_: unknown, record: PMSummary & { isTotalRow?: boolean }) => {
         const eff = record.deliveryEfficiency
-        if (record.isTotalRow) {
-          return <span style={{ fontWeight: 600 }}>{eff.toFixed(2)}</span>
-        }
         const status = eff > 1 ? 'excellent' : eff >= 1 ? 'good' : 'warning'
         const color = status === 'excellent' ? COLORS.success : status === 'good' ? COLORS.primary : COLORS.warning
         const label = status === 'excellent' ? '优秀' : status === 'good' ? '达标' : '预警'
+        // 合计行也显示状态标签
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontWeight: 600, fontSize: 13, color }}>{eff.toFixed(2)}</span>
@@ -162,7 +158,7 @@ export default function ProjectView({ projects }: Props) {
       },
     },
     {
-      title: <TableHeader main="贡献值" unit="万元" />,
+      title: '贡献值',
       dataIndex: 'contributionValue',
       width: 90,
       align: 'right' as const,
@@ -247,14 +243,15 @@ export default function ProjectView({ projects }: Props) {
     },
     {
       title: '交付成本占比',
-      width: 100,
+      width: 110,
       render: (_: unknown, record: Project) => {
         const ratio = record.deliveryCostRatio || (record.actualCost > 0 ? 65 : 0)
         const overLimit = ratio > 30
         return (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '4px 8px', borderRadius: 4,
+            padding: '2px 6px', borderRadius: 4, minWidth: 60,
+            justifyContent: 'center',
             backgroundColor: overLimit ? COLORS.bgRed : COLORS.bgGreen,
           }}>
             <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
@@ -271,8 +268,8 @@ export default function ProjectView({ projects }: Props) {
       width: 100,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Progress percent={v} showInfo={false} size="small" stroke={COLORS.primary} style={{ flex: 1 }} />
-          <span style={{ fontSize: 12, color: COLORS.textTertiary, minWidth: 36 }}>{v}%</span>
+          <Progress percent={Math.round(v)} showInfo={false} size="small" stroke={COLORS.primary} style={{ flex: 1 }} />
+          <span style={{ fontSize: 12, color: COLORS.textTertiary, minWidth: 36 }}>{Math.round(v)}%</span>
         </div>
       ),
     },

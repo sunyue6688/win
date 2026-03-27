@@ -58,7 +58,7 @@ function createColumns(): ColumnProps<SalesTarget>[] {
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: <TableHeader main="计划商务成本" unit="万元" />,
+      title: <TableHeader main="计划交付成本" unit="万元" />,
       dataIndex: 'totalPlanDeliveryCost',
       width: 110,
       align: 'right' as const,
@@ -72,30 +72,24 @@ function createColumns(): ColumnProps<SalesTarget>[] {
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: <TableHeader main="实际商务成本" unit="万元" />,
+      title: <TableHeader main="实际交付成本" unit="万元" />,
       dataIndex: 'actualDeliveryCost',
       width: 110,
       align: 'right' as const,
-      render: (v: number) => {
-        const overLimit = v > 0
-        return (
-          <span style={{ color: overLimit ? COLORS.danger : COLORS.textSecondary }}>
-            {fmtAmountShort(v)}
-          </span>
-        )
-      },
+      render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: '商务成本占比',
+      title: '交付成本占比',
       dataIndex: 'deliveryCostRatio',
-      width: 100,
+      width: 110,
       align: 'right' as const,
-      render: (v: number, record: SalesTarget) => {
-        const overLimit = record.deliveryCostRatio > 0
+      render: (v: number) => {
+        const overLimit = v > 30  // 超过30%预警
         return (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '4px 8px', borderRadius: 4,
+            padding: '2px 6px', borderRadius: 4, minWidth: 60,
+            justifyContent: 'center',
             backgroundColor: overLimit ? COLORS.bgRed : COLORS.bgGreen,
           }}>
             <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>

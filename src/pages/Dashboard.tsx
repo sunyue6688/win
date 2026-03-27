@@ -320,6 +320,9 @@ interface V8RevenueCardProps {
 }
 
 function V8RevenueCard({ contractRevenue, actualRevenue, planRevenue, progress }: V8RevenueCardProps) {
+  // 回款进度：实际回款/实际签约
+  const paymentProgress = contractRevenue > 0 ? Math.round((actualRevenue / contractRevenue) * 100) : 0
+
   return (
     <div style={{
       backgroundColor: COLORS.card,
@@ -332,7 +335,7 @@ function V8RevenueCard({ contractRevenue, actualRevenue, planRevenue, progress }
       <div style={TEXT_STYLES.label}>收入</div>
 
       {/* 主要数据区 */}
-      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>合同签约收入</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: COLORS.textPrimary }}>
@@ -344,6 +347,21 @@ function V8RevenueCard({ contractRevenue, actualRevenue, planRevenue, progress }
           <div style={{ fontSize: 20, fontWeight: 600, color: COLORS.textSecondary }}>
             {fmtAmountShort(actualRevenue)} <span style={{ fontSize: 12 }}>万</span>
           </div>
+          {/* 迷你回款进度条 */}
+          <div style={{ marginTop: 6, width: 80 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 2 }}>
+              <span style={{ color: COLORS.textTertiary }}>回款率</span>
+              <span style={{ fontWeight: 600, color: COLORS.success }}>{paymentProgress}%</span>
+            </div>
+            <div style={{ height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{
+                width: `${Math.min(paymentProgress, 100)}%`,
+                height: '100%',
+                backgroundColor: COLORS.success,
+                borderRadius: 2,
+              }} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -353,7 +371,7 @@ function V8RevenueCard({ contractRevenue, actualRevenue, planRevenue, progress }
       </div>
 
       {/* 进度条 */}
-      <div style={{ marginTop: 12 }}>
+      <div style={{ marginTop: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
           <span style={{ color: COLORS.textTertiary }}>(签约/计划)</span>
           <span style={{ fontWeight: 600, color: COLORS.primary }}>{progress}%</span>
@@ -676,7 +694,7 @@ function CostCategoryTable({ data }: { data: CostCategory[] }) {
   ]
 
   return (
-    <div style={{ marginTop: SPACING.lg, maxHeight: 400, overflow: 'auto' }}>
+    <div style={{ marginTop: SPACING.lg, maxHeight: 600, overflow: 'auto' }}>
       <style>{`
         .cost-tree-table .semi-table-thead {
           background: transparent;

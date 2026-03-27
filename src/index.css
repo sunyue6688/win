@@ -77,6 +77,9 @@
 
 /* 覆盖 Semi Design 的设计变量 - 定义在 body 上 */
 body {
+  /* 始终显示滚动条，防止 Modal 打开时布局偏移 */
+  overflow-y: scroll !important;
+
   /* 覆盖 Semi 的圆角 */
   --semi-border-radius-extra-small: 4px;
   --semi-border-radius-small: 6px;
