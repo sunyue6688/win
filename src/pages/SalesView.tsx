@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, Table, Progress } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
 import type { SalesTarget, Project } from '../mockData'
@@ -11,70 +11,19 @@ interface Props {
   projects?: Project[]
 }
 
-export default function SalesView({ salesTargets, projects = [] }: Props) {
-  // V8 KPI 计算
-  const totalContractAmount = salesTargets.reduce((s, t) => s + t.totalContractAmount, 0)
-  const totalReceivedPayment = salesTargets.reduce((s, t) => s + t.totalReceivedPayment, 0)
-  const overallPaymentRate = totalContractAmount > 0 ? Math.round((totalReceivedPayment / totalContractAmount) * 100) : 0
+// 统一表头断行组件 - 移到组件外部
+function TableHeader({ main, unit }: { main: string; unit: string }) {
+  return (
+    <div style={{ textAlign: 'center', lineHeight: 1.3 }}>
+      <div>{main}</div>
+      <div style={{ fontSize: 11, color: COLORS.textTertiary }}>({unit})</div>
+    </div>
+  )
+}
 
-  // 区县项目金额分布（从项目看板移入）
-  const districtData = useMemo(() => {
-    if (!projects || projects.length === 0) {
-      // 如果没有传入项目数据，使用 salesTargets 模拟
-      const mockDistricts = ['锦江区', '青羊区', '金牛区', '武侯区', '成华区', '高新区', '天府新区', '龙泉驿区', '双流区', '郫都区']
-      return mockDistricts.map((d, i) => ({
-        district: d,
-        amount: Math.round(100 + Math.random() * 400) * 10000,
-        isTop3: i < 3,
-      })).sort((a, b) => b.amount - a.amount)
-    }
-
-    const data = projects.reduce<Record<string, { count: number; amount: number }>>((acc, p) => {
-      if (!acc[p.district]) acc[p.district] = { count: 0, amount: 0 }
-      acc[p.district].count++
-      acc[p.district].amount += p.contractAmount
-      return acc
-    }, {})
-
-    return Object.entries(data)
-      .sort(([, a], [, b]) => b.amount - a.amount)
-      .slice(0, 10)
-      .map(([district, d], i) => ({
-        district,
-        amount: d.amount,
-        isTop3: i < 3,
-      }))
-  }, [projects])
-
-  const districtBarOption = {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    grid: { left: 100, right: 60, top: 20, bottom: 20 },
-    xAxis: {
-      type: 'value',
-      axisLabel: { formatter: (v: number) => `${(v / 10000).toFixed(0)}万`, color: COLORS.textTertiary, fontSize: 11 },
-      splitLine: { lineStyle: { color: COLORS.divider, type: 'dashed' } },
-    },
-    yAxis: {
-      type: 'category',
-      data: districtData.map(d => d.isTop3 ? `★ ${d.district}` : d.district),
-      axisLabel: { fontSize: 12, color: COLORS.textSecondary },
-    },
-    series: [{
-      type: 'bar',
-      data: districtData.map((d) => ({
-        value: d.amount,
-        itemStyle: {
-          color: d.isTop3 ? COLORS.chartPrimary : COLORS.chartTertiary,
-          borderRadius: [0, 4, 4, 0],
-        },
-      })),
-      barWidth: 16,
-      label: { show: true, position: 'right', formatter: (p: { value: number }) => `${(p.value / 10000).toFixed(0)}万`, fontSize: 11, color: COLORS.textSecondary },
-    }],
-  }
-
-  // V8 销售明细表列
-  const columns: ColumnProps<SalesTarget>[] = [
+// 创建列配置的工厂函数
+function createColumns(): ColumnProps<SalesTarget>[] {
+  return [
     {
       title: '销售',
       dataIndex: 'name',
@@ -88,53 +37,61 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
       align: 'center' as const,
     },
     {
-      title: '签约总金额（万元）',
+      title: <TableHeader main="签约金额" unit="万元" />,
       dataIndex: 'totalContractAmount',
-      width: 120,
+      width: 100,
       align: 'right' as const,
       render: (v: number) => fmtAmountShort(v),
     },
     {
-      title: '已回款总金额（万元）',
+      title: <TableHeader main="已回款金额" unit="万元" />,
       dataIndex: 'totalReceivedPayment',
-      width: 130,
+      width: 100,
       align: 'right' as const,
       render: (v: number) => <span style={{ fontWeight: 600 }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: '总计划成本（万元）',
+      title: <TableHeader main="计划成本" unit="万元" />,
       dataIndex: 'totalPlanCost',
-      width: 120,
+      width: 90,
       align: 'right' as const,
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: '总计划交付成本（万元）',
+      title: <TableHeader main="计划商务成本" unit="万元" />,
       dataIndex: 'totalPlanDeliveryCost',
-      width: 140,
-      align: 'right' as const,
-      render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
-    },
-    {
-      title: '实际成本（万元）',
-      dataIndex: 'actualCost',
       width: 110,
       align: 'right' as const,
-      render: (v: number) => <span style={{ fontWeight: 600 }}>{fmtAmountShort(v)}</span>,
+      render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: '实际交付成本（万元）',
-      dataIndex: 'actualDeliveryCost',
-      width: 130,
+      title: <TableHeader main="实际成本" unit="万元" />,
+      dataIndex: 'actualCost',
+      width: 90,
       align: 'right' as const,
-      render: (v: number) => <span style={{ fontWeight: 500 }}>{fmtAmountShort(v)}</span>,
+      render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: '交付成本占比',
+      title: <TableHeader main="实际商务成本" unit="万元" />,
+      dataIndex: 'actualDeliveryCost',
+      width: 110,
+      align: 'right' as const,
+      render: (v: number) => {
+        const overLimit = v > 0
+        return (
+          <span style={{ color: overLimit ? COLORS.danger : COLORS.textSecondary }}>
+            {fmtAmountShort(v)}
+          </span>
+        )
+      },
+    },
+    {
+      title: '商务成本占比',
+      dataIndex: 'deliveryCostRatio',
       width: 100,
-      render: (_: unknown, record: SalesTarget) => {
-        const ratio = record.deliveryCostRatio || (record.actualCost > 0 ? 65 : 0)
-        const overLimit = ratio > 30
+      align: 'right' as const,
+      render: (v: number, record: SalesTarget) => {
+        const overLimit = record.deliveryCostRatio > 0
         return (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -142,30 +99,192 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
             backgroundColor: overLimit ? COLORS.bgRed : COLORS.bgGreen,
           }}>
             <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
-              {ratio.toFixed(1)}%
+              {v.toFixed(1)}%
             </span>
           </div>
         )
       },
     },
     {
-      title: '整体交付效率',
-      width: 100,
-      render: (_: unknown, record: SalesTarget) => {
-        const eff = record.deliveryEfficiency || 1
-        const status = eff > 1 ? 'excellent' : eff >= 1 ? 'good' : 'warning'
-        const color = status === 'excellent' ? COLORS.success : status === 'good' ? COLORS.primary : COLORS.warning
-        return <span style={{ fontWeight: 600, fontSize: 13, color }}>{eff.toFixed(2)}</span>
-      },
-    },
-    {
-      title: '贡献值（万元）',
+      title: <TableHeader main="贡献值" unit="万元" />,
       dataIndex: 'contributionValue',
-      width: 110,
+      width: 90,
       align: 'right' as const,
       render: (v: number) => <span style={{ fontWeight: 600, color: COLORS.success }}>{v.toFixed(2)}</span>,
     },
   ]
+}
+
+export default function SalesView({ salesTargets, projects = [] }: Props) {
+  const [chartView, setChartView] = useState<'treemap' | 'sunburst'>('treemap')
+
+  // V8 KPI 计算
+  const totalContractAmount = salesTargets.reduce((s, t) => s + t.totalContractAmount, 0)
+  const totalReceivedPayment = salesTargets.reduce((s, t) => s + t.totalReceivedPayment, 0)
+  const overallPaymentRate = totalContractAmount > 0 ? Math.round((totalReceivedPayment / totalContractAmount) * 100) : 0
+
+  // 签约项目区县分布 - 树形数据结构（区县 -> 项目）
+  const districtTreeData = useMemo(() => {
+    // 23个区市县 + 成都市本级 + 四川省级 = 25个
+    const allDistricts = [
+      '四川省级', '成都市本级',
+      '高新区', '天府新区', '东部新区',
+      '锦江区', '青羊区', '金牛区', '武侯区', '成华区',
+      '龙泉驿区', '青白江区', '新都区', '温江区', '双流区', '郫都区', '新津区',
+      '金堂县', '大邑县', '蒲江县',
+      '都江堰市', '彭州市', '邛崃市', '崇州市', '简阳市',
+    ]
+
+    if (!projects || projects.length === 0) {
+      // 模拟数据：成都市本级约800万（占45%），其余24个区县分享剩余55%
+      // 使用确定性值替代 Math.random()
+      const mockDistrictValues: Record<string, number> = {
+        '成都市本级': 800,
+        '四川省级': 200,
+        '高新区': 125,
+        '天府新区': 140,
+        '锦江区': 45,
+        '青羊区': 38,
+        '金牛区': 52,
+        '武侯区': 48,
+        '成华区': 35,
+        '龙泉驿区': 55,
+        '青白江区': 28,
+        '新都区': 42,
+        '温江区': 36,
+        '双流区': 58,
+        '郫都区': 40,
+        '新津区': 25,
+        '都江堰市': 32,
+        '彭州市': 30,
+        '邛崃市': 22,
+        '崇州市': 26,
+        '金堂县': 20,
+        '大邑县': 18,
+        '蒲江县': 15,
+        '简阳市': 35,
+      }
+      return allDistricts.map((district) => ({
+        name: district,
+        value: (mockDistrictValues[district] || 25) * 10000,
+      })).sort((a, b) => b.value - a.value)
+    }
+
+    // 真实数据：按区县分组
+    const districtMap = projects.reduce<Record<string, number>>((acc, p) => {
+      if (!acc[p.district]) acc[p.district] = 0
+      acc[p.district] += p.contractAmount
+      return acc
+    }, {})
+
+    // 确保所有区县都有数据（没有的显示小金额）- 使用确定性值
+    const fallbackValues: Record<string, number> = {
+      '成都市本级': 150000, '四川省级': 120000, '高新区': 100000, '天府新区': 95000,
+      '锦江区': 80000, '青羊区': 75000, '金牛区': 85000, '武侯区': 82000,
+      '成华区': 70000, '龙泉驿区': 90000, '青白江区': 60000, '新都区': 78000,
+      '温江区': 72000, '双流区': 92000, '郫都区': 76000, '新津区': 55000,
+      '都江堰市': 65000, '彭州市': 62000, '邛崃市': 48000, '崇州市': 52000,
+      '金堂县': 45000, '大邑县': 40000, '蒲江县': 35000, '简阳市': 68000,
+    }
+    return allDistricts.map((district) => ({
+      name: district,
+      value: districtMap[district] || fallbackValues[district] || 50000,
+    })).sort((a, b) => b.value - a.value)
+  }, [projects])
+
+  // 和谐色系 - 蓝色+灰色调，低饱和度
+  const harmoniousColors = [
+    // 深蓝系
+    '#1E3A5F', '#234B72', '#2D5A87', '#366B9C', '#407CB0',
+    // 中蓝系
+    '#4A8DC4', '#549ED8', '#5EAFEC', '#6BB8F0', '#78C1F4',
+    // 浅蓝系
+    '#85CAF8', '#92D3FC', '#9FDCFF', '#ACE5FF', '#B9EEFF',
+    // 灰蓝系
+    '#7C8FA4', '#8A9BB0', '#98A7BC', '#A6B3C8', '#B4BFD4',
+    // 青灰系
+    '#6B8E9F', '#7A9DAD', '#89ACBB', '#98BBC9', '#A7CAD7',
+  ]
+
+  // 一级数据：只有区县
+  const districtFlatData = districtTreeData.map(d => ({
+    name: d.name,
+    value: d.value,
+  }))
+
+  // 矩形树图配置（一级）
+  const treemapOption = {
+    tooltip: {
+      formatter: (info: { name: string; value: number }) => {
+        return `${info.name}<br/>签约金额: ${(info.value / 10000).toFixed(1)}万`
+      },
+    },
+    series: [{
+      type: 'treemap',
+      data: districtFlatData.map((d, i) => ({
+        name: d.name,
+        value: d.value,
+        itemStyle: { color: harmoniousColors[i % harmoniousColors.length] },
+      })),
+      width: '90%',
+      height: '85%',
+      top: '5%',
+      left: '5%',
+      roam: false,
+      nodeClick: false,
+      breadcrumb: { show: false },
+      label: {
+        show: true,
+        formatter: (info: { name: string; value: number }) => `${info.name}\n${(info.value / 10000).toFixed(1)}万`,
+        fontSize: 13,
+        color: '#fff',
+        fontWeight: 600,
+      },
+      itemStyle: {
+        borderColor: '#fff',
+        borderWidth: 3,
+        gapWidth: 3,
+        borderRadius: 6,
+      },
+    }],
+  }
+
+  // 旭日图配置（一级）
+  const sunburstOption = {
+    tooltip: {
+      formatter: (info: { name: string; value: number }) => {
+        return `${info.name}<br/>签约金额: ${(info.value / 10000).toFixed(1)}万`
+      },
+    },
+    series: [{
+      type: 'sunburst',
+      data: districtFlatData.map((d, i) => ({
+        name: d.name,
+        value: d.value,
+        itemStyle: { color: harmoniousColors[i % harmoniousColors.length] },
+      })),
+      radius: [0, '85%'],
+      center: ['50%', '50%'],
+      sort: (a: { value: number }, b: { value: number }) => b.value - a.value,
+      label: {
+        rotate: 'tangential',
+        fontSize: 12,
+        color: '#fff',
+        fontWeight: 600,
+        formatter: (info: { name: string; value: number }) => `${info.name}`,
+      },
+      itemStyle: {
+        borderRadius: 6,
+        borderColor: '#fff',
+        borderWidth: 2,
+      },
+    }],
+  }
+
+  const districtBarOption = chartView === 'treemap' ? treemapOption : sunburstOption
+
+  // V8 销售明细表列
+  const columns = createColumns()
 
   // 总计行数据
   const totalRow: SalesTarget = {
@@ -269,7 +388,7 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
         </Card>
       </div>
 
-      {/* V8 第二行：区县项目金额分布图 */}
+      {/* V8 第二行：签约项目区县分布图 */}
       <Card
         style={{
           borderRadius: RADII.card,
@@ -277,12 +396,52 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
           boxShadow: SHADOWS.card,
           border: `1px solid ${COLORS.border}`,
           marginBottom: SPACING.xl,
-          height: 360,
+          height: 480,
         }}
         bodyStyle={{ padding: SPACING.xl }}
       >
-        <div style={TEXT_STYLES.cardTitle}>区县项目金额分布（前10）</div>
-        <ReactECharts option={districtBarOption} style={{ height: 280 }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg }}>
+          <div style={TEXT_STYLES.cardTitle}>签约项目区县分布</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setChartView('treemap')}
+              style={{
+                padding: '6px 16px',
+                fontSize: 13,
+                borderRadius: 6,
+                border: `1px solid ${chartView === 'treemap' ? COLORS.primary : COLORS.border}`,
+                backgroundColor: chartView === 'treemap' ? COLORS.primary : 'transparent',
+                color: chartView === 'treemap' ? '#fff' : COLORS.textSecondary,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontWeight: 500,
+              }}
+            >
+              矩形树图
+            </button>
+            <button
+              onClick={() => setChartView('sunburst')}
+              style={{
+                padding: '6px 16px',
+                fontSize: 13,
+                borderRadius: 6,
+                border: `1px solid ${chartView === 'sunburst' ? COLORS.primary : COLORS.border}`,
+                backgroundColor: chartView === 'sunburst' ? COLORS.primary : 'transparent',
+                color: chartView === 'sunburst' ? '#fff' : COLORS.textSecondary,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontWeight: 500,
+              }}
+            >
+              旭日图
+            </button>
+          </div>
+        </div>
+        <ReactECharts
+          option={districtBarOption}
+          style={{ height: 380 }}
+          opts={{ renderer: 'canvas' }}
+        />
       </Card>
 
       {/* V8 第三行：销售列表 */}
@@ -296,37 +455,32 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
         bodyStyle={{ padding: SPACING.xl }}
       >
         <div style={TEXT_STYLES.cardTitle}>销售列表</div>
-        <div style={{ marginTop: SPACING.lg, overflow: 'auto' }}>
+        <div style={{ marginTop: SPACING.lg, maxHeight: 500, overflow: 'auto' }}>
           <Table
             className="sales-table"
             columns={columns}
-            dataSource={salesTargets}
+            dataSource={[
+              ...salesTargets,
+              { ...totalRow, isTotalRow: true } as SalesTarget & { isTotalRow: boolean },
+            ]}
             pagination={false}
             size="small"
-            rowKey="name"
+            rowKey={(record) => (record as { isTotalRow?: boolean }).isTotalRow ? '__total__' : (record as SalesTarget).name}
+            onRow={(record) => {
+              if ((record as { isTotalRow?: boolean }).isTotalRow) {
+                return {
+                  style: {
+                    backgroundColor: COLORS.hover,
+                    fontWeight: 600,
+                    borderTop: `2px solid ${COLORS.border}`,
+                    position: 'sticky',
+                    bottom: 0,
+                  } as React.CSSProperties,
+                }
+              }
+              return {}
+            }}
           />
-          {/* 合计行 - 使用表格模拟 */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '80px 80px 120px 130px 120px 140px 110px 130px 100px 100px 110px',
-            padding: '12px 16px',
-            borderTop: `2px solid ${COLORS.border}`,
-            fontWeight: 600,
-            backgroundColor: COLORS.hover,
-            fontSize: 14,
-          }}>
-            <span style={{ color: COLORS.textPrimary }}>合计</span>
-            <span style={{ textAlign: 'center' }}>{totalRow.projectCount}</span>
-            <span style={{ textAlign: 'right' }}>{fmtAmountShort(totalRow.totalContractAmount)}</span>
-            <span style={{ textAlign: 'right' }}>{fmtAmountShort(totalRow.totalReceivedPayment)}</span>
-            <span style={{ textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(totalRow.totalPlanCost)}</span>
-            <span style={{ textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(totalRow.totalPlanDeliveryCost)}</span>
-            <span style={{ textAlign: 'right' }}>{fmtAmountShort(totalRow.actualCost)}</span>
-            <span style={{ textAlign: 'right' }}>{fmtAmountShort(totalRow.actualDeliveryCost)}</span>
-            <span>{totalRow.deliveryCostRatio.toFixed(1)}%</span>
-            <span>{totalRow.deliveryEfficiency.toFixed(2)}</span>
-            <span style={{ textAlign: 'right', color: COLORS.success }}>{totalRow.contributionValue.toFixed(2)}</span>
-          </div>
         </div>
       </Card>
     </div>

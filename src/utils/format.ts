@@ -11,15 +11,15 @@ export function fmtAmount(v: number): string {
 }
 
 /**
- * 格式化金额（简短版）
+ * 格式化金额（简短版，用于表头已有单位的场景）
  * @param v 金额（元）
- * @returns 格式化后的字符串（不带单位）
+ * @returns 格式化后的字符串（纯数字，保留一位小数，不带单位）
  */
 export function fmtAmountShort(v: number): string {
   if (v >= 10000) {
-    return `${(v / 10000).toFixed(0)} 万`
+    return `${(v / 10000).toFixed(1)}`
   }
-  return `${v}`
+  return `${v.toFixed(1)}`
 }
 
 /**

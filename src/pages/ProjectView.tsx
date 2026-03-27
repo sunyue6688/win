@@ -34,20 +34,9 @@ export default function ProjectView({ projects }: Props) {
   const [searchText, setSearchText] = useState('')
   const [pmFilter, setPmFilter] = useState<string>('全部')
   const [salesFilter, setSalesFilter] = useState<string>('全部')
-  const [pmSearchText, setPmSearchText] = useState('')
-  const [pmSelectFilter, setPmSelectFilter] = useState<string>('全部')
 
   // PM 汇总数据
   const pmSummaries = useMemo(() => generatePMSummaries(), [projects])
-
-  // PM 列表筛选
-  const filteredPmSummaries = useMemo(() => {
-    return pmSummaries.filter((pm) => {
-      const matchSearch = !pmSearchText || pm.pm.toLowerCase().includes(pmSearchText.toLowerCase())
-      // 可以根据 pmSelectFilter 添加更多筛选逻辑
-      return matchSearch
-    })
-  }, [pmSummaries, pmSearchText])
 
   // 获取所有 PM 和销售名
   const pmNames = useMemo(() => [...new Set(projects.map(p => p.pm))], [projects])
@@ -90,30 +79,30 @@ export default function ProjectView({ projects }: Props) {
       align: 'center' as const,
     },
     {
-      title: <TableHeader main="签约总金额" unit="万元" />,
+      title: <TableHeader main="签约金额" unit="万元" />,
       dataIndex: 'totalContractAmount',
       width: 110,
       align: 'right' as const,
       render: (v: number) => fmtAmountShort(v),
     },
     {
-      title: <TableHeader main="已回款总金额" unit="万元" />,
+      title: <TableHeader main="已回款金额" unit="万元" />,
       dataIndex: 'totalReceivedPayment',
       width: 110,
       align: 'right' as const,
       render: (v: number) => fmtAmountShort(v),
     },
     {
-      title: <TableHeader main="总计划成本" unit="万元" />,
+      title: <TableHeader main="计划成本" unit="万元" />,
       dataIndex: 'totalPlanCost',
-      width: 110,
+      width: 100,
       align: 'right' as const,
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: <TableHeader main="总计划交付成本" unit="万元" />,
+      title: <TableHeader main="计划交付成本" unit="万元" />,
       dataIndex: 'totalPlanDeliveryCost',
-      width: 120,
+      width: 110,
       align: 'right' as const,
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
@@ -134,7 +123,10 @@ export default function ProjectView({ projects }: Props) {
     {
       title: '交付成本占比',
       width: 100,
-      render: (_: unknown, record: PMSummary) => {
+      render: (_: unknown, record: PMSummary & { isTotalRow?: boolean }) => {
+        if (record.isTotalRow) {
+          return <span style={{ fontWeight: 600 }}>{record.deliveryCostRatio.toFixed(1)}%</span>
+        }
         const overLimit = record.deliveryCostRatio > 30
         return (
           <div style={{
@@ -153,8 +145,11 @@ export default function ProjectView({ projects }: Props) {
     {
       title: '整体交付效率',
       width: 100,
-      render: (_: unknown, record: PMSummary) => {
+      render: (_: unknown, record: PMSummary & { isTotalRow?: boolean }) => {
         const eff = record.deliveryEfficiency
+        if (record.isTotalRow) {
+          return <span style={{ fontWeight: 600 }}>{eff.toFixed(2)}</span>
+        }
         const status = eff > 1 ? 'excellent' : eff >= 1 ? 'good' : 'warning'
         const color = status === 'excellent' ? COLORS.success : status === 'good' ? COLORS.primary : COLORS.warning
         const label = status === 'excellent' ? '优秀' : status === 'good' ? '达标' : '预警'
@@ -181,28 +176,36 @@ export default function ProjectView({ projects }: Props) {
       title: '项目名称',
       dataIndex: 'name',
       width: 180,
-      render: (text: string, record: Project) => (
-        <div>
-          <div style={{ fontWeight: 600, color: COLORS.textPrimary }}>
-            {text}
-            <Tag size="small" color={record.projectType === '存量' ? 'grey' : 'blue'} style={{ marginLeft: 6 }}>
-              {record.projectType}
-            </Tag>
+      render: (text: string, record: Project & { isTotalRow?: boolean }) => {
+        if (record.isTotalRow) {
+          return <span style={{ fontWeight: 600 }}>{text}</span>
+        }
+        return (
+          <div>
+            <div style={{ fontWeight: 600, color: COLORS.textPrimary }}>
+              {text}
+              <Tag size="small" color={record.projectType === '存量' ? 'grey' : 'blue'} style={{ marginLeft: 6 }}>
+                {record.projectType}
+              </Tag>
+            </div>
+            <div style={{ fontSize: 12, color: COLORS.textTertiary }}>{record.district}</div>
           </div>
-          <div style={{ fontSize: 12, color: COLORS.textTertiary }}>{record.district}</div>
-        </div>
-      ),
+        )
+      },
     },
     {
       title: '项目状态',
       dataIndex: 'status',
       width: 100,
-      render: (status: string) => <Tag color={statusColor[status] || 'grey'} size="small">{status}</Tag>,
+      render: (status: string, record: Project & { isTotalRow?: boolean }) => {
+        if (record.isTotalRow) return null
+        return <Tag color={statusColor[status] || 'grey'} size="small">{status}</Tag>
+      },
     },
     {
-      title: <TableHeader main="合同签约金额" unit="万元" />,
+      title: <TableHeader main="签约金额" unit="万元" />,
       dataIndex: 'contractAmount',
-      width: 110,
+      width: 100,
       align: 'right' as const,
       sorter: (a?: Project, b?: Project) => (a?.contractAmount || 0) - (b?.contractAmount || 0),
       render: (v: number) => fmtAmountShort(v),
@@ -216,25 +219,25 @@ export default function ProjectView({ projects }: Props) {
       render: (v: number) => fmtAmountShort(v),
     },
     {
-      title: <TableHeader main="总计划成本" unit="万元" />,
+      title: <TableHeader main="计划成本" unit="万元" />,
       dataIndex: 'totalPlanCost',
-      width: 100,
+      width: 90,
       align: 'right' as const,
       render: (v: number, record: Project) => (
         <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v || record.actualCost * 0.95)}</span>
       ),
     },
     {
-      title: <TableHeader main="总计划外采成本" unit="万元" />,
+      title: <TableHeader main="计划外采成本" unit="万元" />,
       dataIndex: 'totalPlanExternalCost',
-      width: 120,
+      width: 110,
       align: 'right' as const,
       render: (v: number, record: Project) => (
         <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v || record.costBreakdown?.externalHR || 0)}</span>
       ),
     },
     {
-      title: <TableHeader main="总计划商务成本" unit="万元" />,
+      title: <TableHeader main="计划商务成本" unit="万元" />,
       dataIndex: 'totalPlanBusinessCost',
       width: 120,
       align: 'right' as const,
@@ -306,7 +309,7 @@ export default function ProjectView({ projects }: Props) {
 
   // PM 表格总计数据
   const pmTotals = useMemo(() => {
-    const data = filteredPmSummaries
+    const data = pmSummaries
     return {
       projectCount: data.reduce((s, r) => s + r.projectCount, 0),
       totalContractAmount: data.reduce((s, r) => s + r.totalContractAmount, 0),
@@ -319,7 +322,7 @@ export default function ProjectView({ projects }: Props) {
       deliveryEfficiency: data.length > 0 ? data.reduce((s, r) => s + r.deliveryEfficiency, 0) / data.length : 0,
       contributionValue: data.reduce((s, r) => s + r.contributionValue, 0),
     }
-  }, [filteredPmSummaries])
+  }, [pmSummaries])
 
   // 项目表格总计数据（基于筛选后的数据）
   const projectTotals = useMemo(() => {
@@ -345,61 +348,60 @@ export default function ProjectView({ projects }: Props) {
         marginBottom: SPACING.xl,
       }}>
         {/* 总项目数 */}
-        <Card
-          style={{
-            borderRadius: RADII.card,
-            backgroundColor: COLORS.card,
-            boxShadow: SHADOWS.card,
-            border: `1px solid ${COLORS.border}`,
-          }}
-          bodyStyle={{ padding: SPACING.xl }}
-        >
-          <div style={{ textAlign: 'center' }}>
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: RADII.card,
+          padding: SPACING.xl,
+          border: `1px solid ${COLORS.border}`,
+          boxShadow: SHADOWS.card,
+          borderTop: `3px solid ${COLORS.primary}`,
+        }}>
+          <div style={TEXT_STYLES.label}>项目总数</div>
+          <div style={{ marginTop: 16 }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.primary }}>{totalProjects}</div>
-            <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>总项目数</div>
+            <div style={{ fontSize: 12, color: COLORS.textTertiary, marginTop: 4 }}>个项目</div>
           </div>
-        </Card>
+        </div>
 
         {/* 存量项目 */}
-        <Card
-          style={{
-            borderRadius: RADII.card,
-            backgroundColor: COLORS.card,
-            boxShadow: SHADOWS.card,
-            border: `1px solid ${COLORS.border}`,
-          }}
-          bodyStyle={{ padding: SPACING.xl }}
-        >
-          <div style={{ textAlign: 'center' }}>
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: RADII.card,
+          padding: SPACING.xl,
+          border: `1px solid ${COLORS.border}`,
+          boxShadow: SHADOWS.card,
+          borderTop: `3px solid ${COLORS.textSecondary}`,
+        }}>
+          <div style={TEXT_STYLES.label}>存量项目</div>
+          <div style={{ marginTop: 16 }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.textSecondary }}>{existingProjects}</div>
-            <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>存量项目数</div>
+            <div style={{ fontSize: 12, color: COLORS.textTertiary, marginTop: 4 }}>个项目</div>
           </div>
-        </Card>
+        </div>
 
         {/* 新增项目（含状态细分） */}
-        <Card
-          style={{
-            borderRadius: RADII.card,
-            backgroundColor: COLORS.card,
-            boxShadow: SHADOWS.card,
-            border: `1px solid ${COLORS.border}`,
-          }}
-          bodyStyle={{ padding: SPACING.xl }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.primary }}>{newProjects}</div>
-              <div style={{ fontSize: 13, color: COLORS.textTertiary, marginTop: 4 }}>新增项目</div>
+        <div style={{
+          backgroundColor: COLORS.card,
+          borderRadius: RADII.card,
+          padding: SPACING.xl,
+          border: `1px solid ${COLORS.border}`,
+          boxShadow: SHADOWS.card,
+          borderTop: `3px solid ${COLORS.success}`,
+        }}>
+          <div style={TEXT_STYLES.label}>新增项目</div>
+          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.success }}>{newProjects}</div>
+              <div style={{ fontSize: 12, color: COLORS.textTertiary, marginTop: 4 }}>个项目</div>
             </div>
-            <div style={{ flex: 2, paddingLeft: 24 }}>
-              {/* V8 状态细分 */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 11, color: COLORS.textTertiary, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 11, color: COLORS.textTertiary, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <span>交付中({newDelivering})</span>
-                <span>验收完成({newAcceptanceDone})</span>
-                <span>运维中({newMaintenance})</span>
-                <span>已结项({newClosed})</span>
+                <span>验收({newAcceptanceDone})</span>
+                <span>运维({newMaintenance})</span>
+                <span>结项({newClosed})</span>
               </div>
-              <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: COLORS.border }}>
+              <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: COLORS.border, width: 120 }}>
                 {[
                   { value: newDelivering, color: COLORS.chartPrimary },
                   { value: newAcceptanceDone, color: COLORS.success },
@@ -414,7 +416,7 @@ export default function ProjectView({ projects }: Props) {
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* 第二块：项目经理列表（全宽，删除区县分布图） */}
@@ -429,57 +431,45 @@ export default function ProjectView({ projects }: Props) {
         bodyStyle={{ padding: SPACING.xl }}
       >
         <div style={TEXT_STYLES.cardTitle}>项目经理列表</div>
-        {/* 筛选区 */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, marginTop: 12 }}>
-          <Select placeholder="筛选" value={pmSelectFilter} onChange={(v) => setPmSelectFilter(v as string)} style={{ width: 120 }} size="small">
-            <Select.Option value="全部">全部</Select.Option>
-            <Select.Option value="利润率达标">利润率达标</Select.Option>
-            <Select.Option value="外采超标">外采超标</Select.Option>
-          </Select>
-          <Input placeholder="搜索项目经理" value={pmSearchText} onChange={(v) => setPmSearchText(v)} style={{ flex: 1 }} size="small" />
-        </div>
-        {/* 表格滚动容器 */}
+        {/* 表格滚动容器 - 合计行作为数据的一部分 */}
         <div style={{ maxHeight: 400, overflow: 'auto' }}>
-          <style>{`
-            .pm-table .semi-table-tfoot td {
-              background: ${COLORS.hover} !important;
-              font-weight: 600;
-              border-top: 2px solid ${COLORS.border};
-            }
-          `}</style>
           <Table
             className="pm-table"
             columns={pmColumns}
-            dataSource={filteredPmSummaries}
+            dataSource={[
+              ...pmSummaries,
+              {
+                pm: '合计',
+                projectCount: pmTotals.projectCount,
+                totalContractAmount: pmTotals.totalContractAmount,
+                totalReceivedPayment: pmTotals.totalReceivedPayment,
+                totalPlanCost: pmTotals.totalPlanCost,
+                totalPlanDeliveryCost: pmTotals.totalPlanDeliveryCost,
+                actualCost: pmTotals.actualCost,
+                actualDeliveryCost: pmTotals.actualDeliveryCost,
+                deliveryCostRatio: pmTotals.deliveryCostRatio,
+                deliveryEfficiency: pmTotals.deliveryEfficiency,
+                contributionValue: pmTotals.contributionValue,
+                isTotalRow: true,
+              } as PMSummary & { isTotalRow: boolean },
+            ]}
             pagination={false}
             size="small"
-            rowKey="pm"
-            footer={() => (
-              <div style={{
-                display: 'flex',
-                padding: '12px 0',
-                borderTop: `2px solid ${COLORS.border}`,
-                fontWeight: 600,
-                backgroundColor: COLORS.hover,
-                marginTop: -8,
-                marginLeft: -20,
-                marginRight: -20,
-                paddingLeft: 20,
-                paddingRight: 20,
-              }}>
-                <span style={{ width: 80, color: COLORS.textPrimary }}>合计</span>
-                <span style={{ width: 80, textAlign: 'center' }}>{pmTotals.projectCount}</span>
-                <span style={{ width: 110, textAlign: 'right' }}>{fmtAmountShort(pmTotals.totalContractAmount)}</span>
-                <span style={{ width: 110, textAlign: 'right' }}>{fmtAmountShort(pmTotals.totalReceivedPayment)}</span>
-                <span style={{ width: 110, textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(pmTotals.totalPlanCost)}</span>
-                <span style={{ width: 120, textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(pmTotals.totalPlanDeliveryCost)}</span>
-                <span style={{ width: 100, textAlign: 'right' }}>{fmtAmountShort(pmTotals.actualCost)}</span>
-                <span style={{ width: 110, textAlign: 'right' }}>{fmtAmountShort(pmTotals.actualDeliveryCost)}</span>
-                <span style={{ width: 100 }}>{pmTotals.deliveryCostRatio.toFixed(1)}%</span>
-                <span style={{ width: 100 }}>{pmTotals.deliveryEfficiency.toFixed(2)}</span>
-                <span style={{ width: 90, textAlign: 'right', color: COLORS.success }}>{pmTotals.contributionValue.toFixed(2)}</span>
-              </div>
-            )}
+            rowKey={(record) => (record as { isTotalRow?: boolean }).isTotalRow ? '__total__' : (record as PMSummary).pm}
+            onRow={(record) => {
+              if ((record as { isTotalRow?: boolean }).isTotalRow) {
+                return {
+                  style: {
+                    backgroundColor: COLORS.hover,
+                    fontWeight: 600,
+                    borderTop: `2px solid ${COLORS.border}`,
+                    position: 'sticky',
+                    bottom: 0,
+                  } as React.CSSProperties,
+                };
+              }
+              return {};
+            }}
           />
         </div>
       </Card>
@@ -513,42 +503,52 @@ export default function ProjectView({ projects }: Props) {
             共 {filtered.length} 个
           </span>
         </div>
-        <div style={{ marginTop: 16, overflow: 'auto' }}>
-          <style>{`
-            .project-table .semi-table-tfoot td {
-              background: ${COLORS.hover} !important;
-              font-weight: 600;
-              border-top: 2px solid ${COLORS.border};
-            }
-          `}</style>
+        <div style={{ marginTop: 16 }}>
           <Table
             className="project-table"
+            scroll={{ y: 400 }}
             columns={columns}
-            dataSource={filtered}
-            pagination={{ pageSize: 10, showSizeChanger: false }}
+            dataSource={[
+              ...filtered,
+              {
+                id: '__total__',
+                name: `合计（${filtered.length}个项目）`,
+                district: '',
+                status: '已结项' as const,
+                projectType: '存量' as const,
+                pm: '',
+                sales: '',
+                contractAmount: projectTotals.contractAmount,
+                receivedPayment: projectTotals.receivedPayment,
+                totalPlanCost: projectTotals.totalPlanCost,
+                totalPlanExternalCost: projectTotals.totalPlanExternalCost,
+                totalPlanBusinessCost: projectTotals.totalPlanBusinessCost,
+                actualCost: 0,
+                deliveryCostRatio: projectTotals.deliveryCostRatio,
+                progress: projectTotals.progress,
+                deliveryEfficiency: projectTotals.deliveryEfficiency,
+                planProfitRate: 0,
+                externalHRRatioLimit: 0,
+                isTotalRow: true,
+              } as Project & { isTotalRow: boolean },
+            ]}
+            pagination={false}
             size="small"
-            rowKey="id"
-            footer={() => (
-              <div style={{
-                display: 'flex',
-                padding: '12px 0',
-                borderTop: `2px solid ${COLORS.border}`,
-                fontWeight: 600,
-                backgroundColor: COLORS.hover,
-                marginTop: -8,
-              }}>
-                <span style={{ width: 180, color: COLORS.textPrimary, paddingLeft: 8 }}>合计（{filtered.length}个项目）</span>
-                <span style={{ width: 100 }} />
-                <span style={{ width: 110, textAlign: 'right' }}>{fmtAmountShort(projectTotals.contractAmount)}</span>
-                <span style={{ width: 100, textAlign: 'right' }}>{fmtAmountShort(projectTotals.receivedPayment)}</span>
-                <span style={{ width: 100, textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(projectTotals.totalPlanCost)}</span>
-                <span style={{ width: 120, textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(projectTotals.totalPlanExternalCost)}</span>
-                <span style={{ width: 120, textAlign: 'right', color: COLORS.textSecondary }}>{fmtAmountShort(projectTotals.totalPlanBusinessCost)}</span>
-                <span style={{ width: 100 }}>{projectTotals.deliveryCostRatio.toFixed(1)}%</span>
-                <span style={{ width: 100 }}>{projectTotals.progress.toFixed(0)}%</span>
-                <span style={{ width: 90 }}>{projectTotals.deliveryEfficiency.toFixed(2)}</span>
-              </div>
-            )}
+            rowKey={(record) => (record as { isTotalRow?: boolean }).isTotalRow ? '__total__' : (record as Project).id}
+            onRow={(record) => {
+              if ((record as { isTotalRow?: boolean }).isTotalRow) {
+                return {
+                  style: {
+                    backgroundColor: COLORS.hover,
+                    fontWeight: 600,
+                    borderTop: `2px solid ${COLORS.border}`,
+                    position: 'sticky',
+                    bottom: 0,
+                  } as React.CSSProperties,
+                }
+              }
+              return {}
+            }}
           />
         </div>
       </Card>

@@ -395,34 +395,48 @@ export function generateOverview(): DepartmentOverview {
     // 利润相关
     actualProfit,
     planProfit,
-    // 成本分类（三级树形结构）
-    costCategories: [
-      // 外部成本（一级）
-      createCostNode('external', '外部成本', 1, 0, 0, false, [
-        // 交付成本（二级）
-        createCostNode('external-delivery', '交付成本', 2, 0, 0, false, [
-          createCostNode('external-delivery-external', '外部门成本', 3,
-            Math.round(totalPlanCost * 0.25),
-            totalExternalHR + Math.round(existingTotalCost * 0.25)),
-          createCostNode('external-delivery-outsource', '外采成本', 3,
-            Math.round(totalPlanCost * 0.15),
-            Math.round(totalExternalHR * 0.5) + Math.round(existingTotalCost * 0.15)),
-        ]),
-        // 商务成本（二级）
-        createCostNode('external-business', '商务成本', 2, 0, 0, false, [
-          createCostNode('external-business-outsource', '外采成本', 3,
-            Math.round(totalPlanCost * 0.08),
-            totalBusinessCost + Math.round(existingTotalCost * 0.08)),
-          createCostNode('external-business-central', '集采成本', 3,
-            Math.round(totalPlanCost * 0.05),
-            Math.round(totalBusinessCost * 0.4) + Math.round(existingTotalCost * 0.05)),
-        ]),
-      ]),
-      // 内部成本（一级，无子级）
-      createCostNode('internal', '内部成本', 1,
+    // 成本分类（三级树形结构）- 先定义子项，再计算父项之和
+    costCategories: (() => {
+      // 三级子项
+      const deliveryExternalHR = createCostNode('external-delivery-external', '外部门成本', 3,
+        Math.round(totalPlanCost * 0.25),
+        totalExternalHR + Math.round(existingTotalCost * 0.25))
+      const deliveryOutsource = createCostNode('external-delivery-outsource', '外采成本', 3,
+        Math.round(totalPlanCost * 0.15),
+        Math.round(totalExternalHR * 0.5) + Math.round(existingTotalCost * 0.15))
+      const businessOutsource = createCostNode('external-business-outsource', '外采成本', 3,
+        Math.round(totalPlanCost * 0.08),
+        totalBusinessCost + Math.round(existingTotalCost * 0.08))
+      const businessCentral = createCostNode('external-business-central', '集采成本', 3,
+        Math.round(totalPlanCost * 0.05),
+        Math.round(totalBusinessCost * 0.4) + Math.round(existingTotalCost * 0.05))
+
+      // 二级父项（子项之和）
+      const deliveryCost = createCostNode('external-delivery', '交付成本', 2,
+        deliveryExternalHR.plan + deliveryOutsource.plan,
+        deliveryExternalHR.actual + deliveryOutsource.actual,
+        false,
+        [deliveryExternalHR, deliveryOutsource])
+      const businessCost = createCostNode('external-business', '商务成本', 2,
+        businessOutsource.plan + businessCentral.plan,
+        businessOutsource.actual + businessCentral.actual,
+        false,
+        [businessOutsource, businessCentral])
+
+      // 一级外部成本（子项之和）
+      const externalCost = createCostNode('external', '外部成本', 1,
+        deliveryCost.plan + businessCost.plan,
+        deliveryCost.actual + businessCost.actual,
+        false,
+        [deliveryCost, businessCost])
+
+      // 一级内部成本
+      const internalCost = createCostNode('internal', '内部成本', 1,
         Math.round(totalPlanCost * 0.47),
-        totalInternalHR + totalOtherCost + Math.round(existingTotalCost * 0.52), true),
-    ],
+        totalInternalHR + totalOtherCost + Math.round(existingTotalCost * 0.52), true)
+
+      return [externalCost, internalCost]
+    })(),
     // 项目统计
     projectStats: {
       total: projects.length,

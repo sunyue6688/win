@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Card, Progress, Table } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
 import type { DepartmentOverview, CostCategory } from '../mockData'
-import { fmtAmount } from '../utils/format'
+import { fmtAmountShort } from '../utils/format'
 import { COLORS, SHADOWS, SPACING, TEXT_STYLES, RADII } from '../styles/theme'
 import type { ColumnProps } from '@douyinfe/semi-ui/lib/es/table'
 
@@ -39,18 +39,16 @@ export default function Dashboard({ overview }: Props) {
   const costProgress = totalPlanCost > 0 ? Math.round((totalActualCost / totalPlanCost) * 100) : 0
   const profitProgress = planProfit > 0 ? Math.round((actualProfit / planProfit) * 100) : 0
 
-  // 环形图 - 5项外部成本 + 内部成本（灰色）
-  // 定义颜色：5项外部成本 + 1项内部成本（灰色）
-  const COST_COLORS = {
-    '交付-外部门': '#3B82F6',      // 蓝色
-    '交付-外采成本': '#60A5FA',    // 浅蓝
-    '商务-外采': '#22C55E',        // 绿色
-    '商务-集采': '#86EFAC',        // 浅绿
-    '内部成本': '#94A3B8',         // 灰色
-  }
-
   // 获取扁平化的5项外部成本 + 内部成本
   const flatCostData = useMemo(() => {
+    // 定义颜色：交付成本（蓝色系）、商务成本（紫色系）、内部成本（灰色弱化）
+    const COST_COLORS: Record<string, string> = {
+      '交付-外部门': '#3B82F6',
+      '交付-外采成本': '#60A5FA',
+      '商务-外采成本': '#8B5CF6',
+      '商务-集采': '#A78BFA',
+      '内部成本': '#CBD5E1',
+    }
     const result: { name: string; value: number; color: string; plan: number; actual: number }[] = []
 
     // 遍历成本分类，提取5项外部成本
@@ -87,7 +85,7 @@ export default function Dashboard({ overview }: Props) {
     })
 
     return result
-  }, [overview.costCategories])
+  }, [overview])
 
   const costPieOption = {
     tooltip: {
@@ -98,11 +96,6 @@ export default function Dashboard({ overview }: Props) {
       borderWidth: 1,
       borderRadius: 8,
       padding: [8, 12],
-    },
-    legend: {
-      bottom: 0,
-      textStyle: { fontSize: 12, color: COLORS.textSecondary },
-      itemGap: 16,
     },
     graphic: [
       {
@@ -122,7 +115,7 @@ export default function Dashboard({ overview }: Props) {
         left: 'center',
         top: '48%',
         style: {
-          text: fmtAmount(overview.totalActualCost),
+          text: fmtAmountShort(overview.totalActualCost) + ' 万',
           textAlign: 'center',
           fill: COLORS.textPrimary,
           fontSize: 20,
@@ -136,9 +129,15 @@ export default function Dashboard({ overview }: Props) {
       center: ['50%', '45%'],
       label: {
         show: true,
-        formatter: '{b}\n{c}万',
+        position: 'outside',
+        formatter: '{b}\n{c}万 ({d}%)',
         fontSize: 11,
         color: COLORS.textSecondary,
+      },
+      labelLine: {
+        show: true,
+        length: 10,
+        length2: 15,
       },
       emphasis: { scale: true, scaleSize: 5 },
       data: flatCostData.map(item => ({
@@ -337,20 +336,20 @@ function V8RevenueCard({ contractRevenue, actualRevenue, planRevenue, progress }
         <div>
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>合同签约收入</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: COLORS.textPrimary }}>
-            {fmtAmount(contractRevenue)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
+            {fmtAmountShort(contractRevenue)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>实际回款</div>
           <div style={{ fontSize: 20, fontWeight: 600, color: COLORS.textSecondary }}>
-            {fmtAmount(actualRevenue)} <span style={{ fontSize: 12 }}>万</span>
+            {fmtAmountShort(actualRevenue)} <span style={{ fontSize: 12 }}>万</span>
           </div>
         </div>
       </div>
 
       {/* 年度计划 */}
       <div style={{ marginTop: 12, fontSize: 12, color: COLORS.textTertiary }}>
-        年度收入计划 {fmtAmount(planRevenue)} 万
+        年度收入计划 {fmtAmountShort(planRevenue)} 万
       </div>
 
       {/* 进度条 */}
@@ -398,7 +397,7 @@ function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLim
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>计划成本</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontSize: 24, fontWeight: 700, color: isOverLimit ? COLORS.danger : COLORS.success }}>
-              {fmtAmount(planCost)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
+              {fmtAmountShort(planCost)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
             </span>
             <span style={{
               fontSize: 14,
@@ -416,7 +415,7 @@ function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLim
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>实际成本</div>
           <div style={{ fontSize: 20, fontWeight: 600, color: COLORS.textSecondary }}>
-            {fmtAmount(actualCost)} <span style={{ fontSize: 12 }}>万</span>
+            {fmtAmountShort(actualCost)} <span style={{ fontSize: 12 }}>万</span>
           </div>
         </div>
       </div>
@@ -471,7 +470,7 @@ function V8ProfitCard({ actualProfit, planProfit, progress }: V8ProfitCardProps)
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>实时预测毛利润</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontSize: 24, fontWeight: 700, color: COLORS.textPrimary }}>
-              {fmtAmount(actualProfit)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
+              {fmtAmountShort(actualProfit)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
             </span>
             <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.textSecondary }}>
               ({profitRate.toFixed(0)}%)
@@ -481,7 +480,7 @@ function V8ProfitCard({ actualProfit, planProfit, progress }: V8ProfitCardProps)
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>计划毛利润</div>
           <div style={{ fontSize: 18, fontWeight: 500, color: COLORS.textTertiary }}>
-            {fmtAmount(planProfit)} <span style={{ fontSize: 11 }}>万</span>
+            {fmtAmountShort(planProfit)} <span style={{ fontSize: 11 }}>万</span>
           </div>
         </div>
       </div>
