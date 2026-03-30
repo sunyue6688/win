@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { Card, Progress, Table, Tooltip } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
 import type { DepartmentOverview, CostCategory } from '../mockData'
 import { fmtAmountShort } from '../utils/format'
 import { COLORS, SHADOWS, SPACING, TEXT_STYLES, RADII } from '../styles/theme'
 import type { ColumnProps } from '@douyinfe/semi-ui/lib/es/table'
+import type { MonthlyCost } from '../mockData'
 
 // 警告图标组件
 function AlertIcon() {
@@ -17,6 +18,170 @@ function AlertIcon() {
 
 interface Props {
   overview: DepartmentOverview
+}
+
+// 从成本分类树中提取所有 Level 3 叶子节点（含月度数据）
+function extractLeafCategories(categories: CostCategory[]): { key: string; name: string; isInternal?: boolean; monthlyData: MonthlyCost[] }[] {
+  const result: { key: string; name: string; isInternal?: boolean; monthlyData: MonthlyCost[] }[] = []
+  categories.forEach(cat => {
+    if (cat.monthlyData && cat.monthlyData.length > 0) {
+      result.push({ key: cat.key, name: cat.name, isInternal: cat.isInternal, monthlyData: cat.monthlyData })
+    }
+    if (cat.children) {
+      result.push(...extractLeafCategories(cat.children))
+    }
+  })
+  return result
+}
+
+// 蓝色色阶（计划）
+function getPlanColor(value: number, max: number): string {
+  if (max <= 0 || value <= 0) return '#EFF6FF'
+  const ratio = Math.min(value / max, 1)
+  if (ratio < 0.25) return '#DBEAFE'
+  if (ratio < 0.5) return '#93C5FD'
+  if (ratio < 0.75) return '#3B82F6'
+  return '#1E40AF'
+}
+
+// 橙色色阶（实际）
+function getActualColor(value: number, max: number): string {
+  if (max <= 0 || value <= 0) return '#FFF7ED'
+  const ratio = Math.min(value / max, 1)
+  if (ratio < 0.25) return '#FEF3C7'
+  if (ratio < 0.5) return '#FCD34D'
+  if (ratio < 0.75) return '#F59E0B'
+  return '#D97706'
+}
+
+function CostHeatmap({ data }: { data: CostCategory[] }) {
+  const leaves = extractLeafCategories(data)
+  if (leaves.length === 0) return null
+
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+
+  // 预计算每个分类的 plan/actual 最大值（用于色阶归一化）
+  const categoryMaxes = leaves.map(leaf => ({
+    planMax: Math.max(...leaf.monthlyData.map(d => d.plan)),
+    actualMax: Math.max(...leaf.monthlyData.map(d => d.actual)),
+  }))
+
+  // tooltip 状态
+  const [tooltip, setTooltip] = React.useState<{
+    x: number; y: number
+    catName: string; month: string
+    plan: number; actual: number
+  } | null>(null)
+
+  return (
+    <div style={{ marginTop: SPACING.xl, position: 'relative' }}>
+      {/* 图例 */}
+      <div style={{ display: 'flex', gap: 24, marginBottom: 12, fontSize: 12, color: COLORS.textSecondary }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: 'linear-gradient(135deg, #DBEAFE, #1E40AF)' }} />
+          计划新增（色深=金额）
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 3, background: 'linear-gradient(135deg, #FEF3C7, #D97706)' }} />
+          实际消耗（色深=金额）
+        </span>
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          position: 'fixed',
+          left: tooltip.x + 12,
+          top: tooltip.y - 10,
+          zIndex: 1080,
+          backgroundColor: '#fff',
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 8,
+          padding: '10px 14px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          fontSize: 12,
+          lineHeight: 1.8,
+          pointerEvents: 'none',
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{tooltip.catName} · {tooltip.month}</div>
+          <div style={{ color: COLORS.info }}>计划新增: {tooltip.plan.toFixed(2)} 万</div>
+          <div style={{ color: COLORS.warning }}>实际消耗: {tooltip.actual.toFixed(2)} 万</div>
+        </div>
+      )}
+
+      {/* 热力图网格 */}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
+            <tr>
+              <th style={{ width: 100, padding: '6px 8px', textAlign: 'left', color: COLORS.textTertiary, fontWeight: 500 }}></th>
+              {months.map(m => (
+                <th key={m} style={{
+                  width: 56, padding: '6px 4px', textAlign: 'center',
+                  color: COLORS.textSecondary, fontWeight: 500, fontSize: 11,
+                }}>
+                  {m}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {leaves.map((leaf, catIdx) => (
+              <tr key={leaf.key}>
+                <td style={{
+                  padding: '4px 8px',
+                  color: leaf.isInternal ? COLORS.textTertiary : COLORS.textSecondary,
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {leaf.name}
+                </td>
+                {leaf.monthlyData.map((md, monthIdx) => {
+                  const maxPlan = categoryMaxes[catIdx].planMax
+                  const maxActual = categoryMaxes[catIdx].actualMax
+                  return (
+                    <td key={monthIdx} style={{ padding: '2px 2px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          width: 48,
+                          height: 28,
+                          borderRadius: 4,
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          border: '1px solid #fff',
+                        }}
+                        onMouseEnter={(e) => {
+                          setTooltip({
+                            x: e.clientX, y: e.clientY,
+                            catName: leaf.name, month: months[monthIdx],
+                            plan: md.plan, actual: md.actual,
+                          })
+                        }}
+                        onMouseMove={(e) => {
+                          setTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)
+                        }}
+                        onMouseLeave={() => setTooltip(null)}
+                      >
+                        <div style={{
+                          flex: 1,
+                          backgroundColor: md.plan > 0 ? getPlanColor(md.plan, maxPlan) : '#F1F5F9',
+                        }} />
+                        <div style={{
+                          flex: 1,
+                          backgroundColor: md.actual > 0 ? getActualColor(md.actual, maxActual) : '#F1F5F9',
+                        }} />
+                      </div>
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 export default function Dashboard({ overview }: Props) {
@@ -306,6 +471,21 @@ export default function Dashboard({ overview }: Props) {
       >
         <div style={TEXT_STYLES.cardTitle}>成本分类明细</div>
         <CostCategoryTable data={overview.costCategories} />
+      </Card>
+
+      {/* 成本跟踪热力图 */}
+      <Card
+        style={{
+          borderRadius: RADII.card,
+          backgroundColor: COLORS.card,
+          boxShadow: SHADOWS.card,
+          border: `1px solid ${COLORS.border}`,
+          marginTop: SPACING.xl,
+        }}
+        bodyStyle={{ padding: SPACING.xl }}
+      >
+        <div style={TEXT_STYLES.cardTitle}>成本跟踪热力图</div>
+        <CostHeatmap data={overview.costCategories} />
       </Card>
     </div>
   )

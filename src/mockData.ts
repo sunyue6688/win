@@ -104,6 +104,13 @@ export interface DepartmentOverview {
   }
 }
 
+// 月度成本明细
+export interface MonthlyCost {
+  month: number
+  plan: number    // 计划新增（万元）
+  actual: number  // 实际消耗（万元）
+}
+
 // 三级成本分类结构
 export interface CostCategory {
   key: string
@@ -118,6 +125,7 @@ export interface CostCategory {
   usagePct: number        // 使用进度
   isInternal?: boolean    // 内部成本标记（视觉降级）
   children?: CostCategory[]
+  monthlyData?: MonthlyCost[]  // 月度数据（仅 Level 3 叶子节点有）
 }
 
 // ============ 工具函数 ============
@@ -128,6 +136,62 @@ function randomBetween(min: number, max: number): number {
 
 function formatWan(amount: number): number {
   return Math.round(amount / 10000)
+}
+
+// 简单 hash，将字符串转为数字种子
+function hashSeed(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
+}
+
+// 确定性伪随机数生成器（基于种子）
+function seededRandom(seed: number): () => number {
+  let s = seed || 1
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return s / 2147483647
+  }
+}
+
+// 根据总金额生成12个月的月度分布数据
+function generateMonthlyData(
+  key: string,
+  totalPlanWan: number,
+  totalActualWan: number,
+): MonthlyCost[] {
+  const rand = seededRandom(hashSeed(key))
+
+  // 生成 plan 月度权重（计划集中在前几个月）
+  const planWeights = Array.from({ length: 12 }, (_, i) => {
+    // 前6个月权重高，后6个月权重低
+    const base = i < 6 ? 12 - i : 3
+    return base + rand() * 4
+  })
+  const planWeightSum = planWeights.reduce((a, b) => a + b, 0)
+
+  // 生成 actual 月度权重（实际消耗相对均匀，有波动）
+  const actualWeights = Array.from({ length: 12 }, () => 1 + rand() * 3)
+  const actualWeightSum = actualWeights.reduce((a, b) => a + b, 0)
+
+  const result: MonthlyCost[] = []
+  for (let m = 0; m < 12; m++) {
+    const plan = m < 3 ? Math.round(totalPlanWan * (planWeights[m] / planWeightSum) * 100) / 100 : 0
+    const actual = m < 3 ? Math.round(totalActualWan * (actualWeights[m] / actualWeightSum) * 100) / 100 : 0
+    result.push({ month: m + 1, plan, actual })
+  }
+
+  // 修正尾差（仅修正前3个月）
+  const planSum = result.slice(0, 3).reduce((s, d) => s + d.plan, 0)
+  const actualSum = result.slice(0, 3).reduce((s, d) => s + d.actual, 0)
+  if (result.length > 2) {
+    result[2].plan = Math.round((result[2].plan + totalPlanWan - planSum) * 100) / 100
+    result[2].actual = Math.round((result[2].actual + totalActualWan - actualSum) * 100) / 100
+  }
+
+  return result
 }
 
 // ============ 常量配置 ============
@@ -470,7 +534,13 @@ export function getOverview(): DepartmentOverview {
     const current = formatWan(actual)
     const remaining = formatWan(Math.max(plan - actual, 0))
     const usagePct = plan > 0 ? Math.round((actual / plan) * 100) : 0
-    return { key, name, level, plan, actual, q1, q2, current, remaining, usagePct, isInternal, children }
+    // 仅 Level 3 叶子节点生成月度数据
+    const planWan = Math.round(plan / 10000)
+    const actualWan = Math.round(actual / 10000)
+    const monthlyData = level === 3 && !children
+      ? generateMonthlyData(key, planWan, actualWan)
+      : undefined
+    return { key, name, level, plan, actual, q1, q2, current, remaining, usagePct, isInternal, children, monthlyData }
   }
 
   // 成本分类（基于实际数据计算）
