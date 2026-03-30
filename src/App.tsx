@@ -36,7 +36,7 @@ function App() {
       case 'project':
         return <ProjectView projects={projects} />
       case 'sales':
-        return <SalesView salesTargets={salesTargets} />
+        return <SalesView salesTargets={salesTargets} projects={projects} />
       default:
         return <Dashboard overview={overview} />
     }

@@ -20,21 +20,15 @@ export interface Project {
   receivedPayment: number          // 已回款金额
   progress: number                 // 进度百分比
   planProfitRate: number           // 计划利润率
-  externalHRRatioLimit: number     // 外采占比上限
+  externalHRRatioLimit: number     // 交付占比上限
   actualCost: number               // 实际成本
   // V8 新增字段
-  totalPlanCost: number            // 总计划成本（占签约50-70%）
-  totalPlanDeliveryCost: number    // 计划交付成本（占签约40-70%，≤计划成本）
-  totalPlanExternalCost: number    // 计划外采成本（占计划交付50%左右）
-  totalPlanBusinessCost: number    // 计划商务成本（占计划成本20%）
+  totalPlanCost: number            // 总计划成本
+  totalPlanDeliveryCost: number    // 总计划交付成本
+  totalPlanBusinessCost: number    // 总计划商务成本
+  actualDeliveryCost: number       // 实际交付成本
   deliveryCostRatio: number        // 交付成本占比
-  deliveryEfficiency: number       // 交付成本效率
-  costBreakdown?: {
-    internalHR: number
-    externalHR: number
-    businessCost: number
-    otherCost: number
-  }
+  deliveryCostProgress: number     // 交付成本消耗进度
 }
 
 export interface SalesTarget {
@@ -45,18 +39,12 @@ export interface SalesTarget {
   totalReceivedPayment: number     // 已回款总金额
   totalPlanCost: number            // 总计划成本
   totalPlanDeliveryCost: number    // 总计划交付成本
-  totalPlanExternalCost: number    // 总计划外采成本
   totalPlanBusinessCost: number    // 总计划商务成本
   actualCost: number               // 实际成本
   actualDeliveryCost: number       // 实际交付成本
   deliveryCostRatio: number        // 交付成本占比
-  deliveryEfficiency: number       // 整体交付效率
+  deliveryCostProgress: number     // 交付成本消耗进度
   contributionValue: number        // 贡献值
-  // 保留旧字段兼容
-  planRevenue: number
-  actualRevenue: number
-  planProfitRate: number
-  actualProfitRate: number
 }
 
 export interface PMSummary {
@@ -66,19 +54,12 @@ export interface PMSummary {
   totalReceivedPayment: number     // 已回款总金额
   totalPlanCost: number            // 总计划成本
   totalPlanDeliveryCost: number    // 总计划交付成本
-  totalPlanExternalCost: number    // 总计划外采成本
   totalPlanBusinessCost: number    // 总计划商务成本
   actualCost: number               // 实际成本
   actualDeliveryCost: number       // 实际交付成本
   deliveryCostRatio: number        // 交付成本占比（超30%预警）
-  deliveryEfficiency: number       // 整体交付效率（>1优秀，=1达标，<1预警）
+  deliveryCostProgress: number     // 交付成本消耗进度
   contributionValue: number        // 贡献值（万元）
-  // 保留旧字段用于兼容
-  estimatedCost: number
-  estimatedProfit: number
-  estimatedProfitRate: number
-  externalHRRatio: number
-  externalHRRatioLimit: number
 }
 
 export interface CostSubCategory {
@@ -150,11 +131,6 @@ function formatWan(amount: number): number {
 }
 
 // ============ 常量配置 ============
-
-const DEPT_CONFIG = {
-  planProfitRate: 20,
-  externalHRRatioLimit: 0.15,
-}
 
 const salesNames = ['张伟', '李娜', '王强', '赵敏', '刘洋']
 const pmNames = ['陈工', '周工', '吴工', '郑工', '林工']
@@ -314,41 +290,26 @@ function buildProjectFromSeed(seed: ProjectSeed, index: number): Project {
   const planDeliveryRatio = Math.min(randomBetween(40, 70) / 100, planCostRatio)
   const totalPlanDeliveryCost = Math.round(contractAmount * planDeliveryRatio)
 
-  // 计划外采成本：计划交付成本的50%左右（45%-55%）
-  const planExternalRatio = randomBetween(45, 55) / 100
-  const totalPlanExternalCost = Math.round(totalPlanDeliveryCost * planExternalRatio)
-
   // 计划商务成本：计划成本的20%
   const totalPlanBusinessCost = Math.round(totalPlanCost * 0.20)
 
   // 实际成本：基于计划成本，有波动
-  // 存量项目大部分在预算内（70%-95%），小部分超预算（100%-110%）
-  // 新增项目大部分在预算内（50%-90%），因为还在进行中
   const actualCostRatio = projectType === '存量'
     ? (index % 4 === 0 ? randomBetween(100, 110) : randomBetween(70, 95)) / 100
     : randomBetween(50, 85) / 100
   const actualCost = Math.round(totalPlanCost * actualCostRatio)
 
-  // 交付成本占比：需要有合理分布
-  // 有些项目控制在30%以下（正常），有些超过30%（预警）
-  // 交付成本 = 内部人力 + 外采人力
+  // 交付成本占比目标
   const deliveryCostRatioTarget = index % 3 === 0
-    ? randomBetween(35, 45)  // 1/3 超预警
-    : randomBetween(20, 28)  // 2/3 正常范围内
-  const deliveryCostRatio = deliveryCostRatioTarget
+    ? randomBetween(35, 45)
+    : randomBetween(20, 28)
 
   // 实际交付成本
-  const actualDeliveryCost = Math.round(actualCost * deliveryCostRatio / 100)
+  const actualDeliveryCost = Math.round(actualCost * deliveryCostRatioTarget / 100)
 
-  // 实际成本分解
-  const internalHR = Math.round(actualDeliveryCost * 0.55)  // 内部人力约占交付成本的55%
-  const externalHR = actualDeliveryCost - internalHR         // 外采人力约占45%
-  const businessCost = Math.round(actualCost * 0.15)         // 商务成本约15%
-  const otherCost = actualCost - internalHR - externalHR - businessCost
-
-  // 交付效率 = 计划交付成本 * 进度 / 实际交付成本
-  const deliveryEfficiency = actualDeliveryCost > 0
-    ? (totalPlanDeliveryCost * progress / 100) / actualDeliveryCost
+  // 交付成本消耗进度 = 实际交付成本 ÷ 总计划交付成本 × 100
+  const deliveryCostProgress = totalPlanDeliveryCost > 0
+    ? Math.round((actualDeliveryCost / totalPlanDeliveryCost) * 100 * 10) / 10
     : 0
 
   // 计划利润率
@@ -368,20 +329,14 @@ function buildProjectFromSeed(seed: ProjectSeed, index: number): Project {
     receivedPayment,
     progress,
     planProfitRate,
-    externalHRRatioLimit: DEPT_CONFIG.externalHRRatioLimit,
+    externalHRRatioLimit: 30,
     actualCost,
     totalPlanCost,
     totalPlanDeliveryCost,
-    totalPlanExternalCost,
     totalPlanBusinessCost,
-    deliveryCostRatio: Math.round(deliveryCostRatio * 10) / 10,
-    deliveryEfficiency: Math.round(deliveryEfficiency * 100) / 100,
-    costBreakdown: {
-      internalHR,
-      externalHR,
-      businessCost,
-      otherCost: Math.max(otherCost, 0),
-    },
+    actualDeliveryCost,
+    deliveryCostRatio: Math.round(deliveryCostRatioTarget * 10) / 10,
+    deliveryCostProgress,
   }
 }
 
@@ -401,31 +356,24 @@ export function getSalesTargets(): SalesTarget[] {
     const totalReceivedPayment = salesProjects.reduce((s, p) => s + p.receivedPayment, 0)
     const totalPlanCost = salesProjects.reduce((s, p) => s + p.totalPlanCost, 0)
     const totalPlanDeliveryCost = salesProjects.reduce((s, p) => s + p.totalPlanDeliveryCost, 0)
-    const totalPlanExternalCost = salesProjects.reduce((s, p) => s + p.totalPlanExternalCost, 0)
     const totalPlanBusinessCost = salesProjects.reduce((s, p) => s + p.totalPlanBusinessCost, 0)
     const actualCost = salesProjects.reduce((s, p) => s + p.actualCost, 0)
-    const actualDeliveryCost = salesProjects.reduce((s, p) => s + (p.costBreakdown?.internalHR || 0) + (p.costBreakdown?.externalHR || 0), 0)
+    const actualDeliveryCost = salesProjects.reduce((s, p) => s + p.actualDeliveryCost, 0)
 
-    // 直接使用项目中计算好的交付成本占比，取平均值
-    const deliveryCostRatio = salesProjects.length > 0
-      ? salesProjects.reduce((s, p) => s + p.deliveryCostRatio, 0) / salesProjects.length
+    // 交付成本占比 = ∑实际交付成本 / ∑实际总成本
+    const deliveryCostRatio = actualCost > 0
+      ? Math.round((actualDeliveryCost / actualCost) * 100 * 10) / 10
       : 0
 
-    const avgProgress = salesProjects.length > 0
-      ? salesProjects.reduce((s, p) => s + p.progress, 0) / salesProjects.length
-      : 0
-    const deliveryEfficiency = actualDeliveryCost > 0
-      ? (totalPlanDeliveryCost * avgProgress / 100) / actualDeliveryCost
+    // 交付成本消耗进度 = ∑实际交付成本 / ∑总计划交付成本 × 100
+    const deliveryCostProgress = totalPlanDeliveryCost > 0
+      ? Math.round((actualDeliveryCost / totalPlanDeliveryCost) * 100 * 10) / 10
       : 0
 
-    // 贡献值：仅统计已结项项目的（计划成本 - 实际成本 * 0.65）* 1%
+    // 贡献值 = 1% × ∑(计划交付成本 - 实际交付成本)，仅统计已结项
     const closedProjects = salesProjects.filter(p => p.status === '已结项')
     const contributionValue = closedProjects.reduce((s, p) =>
-      s + (p.totalPlanCost - p.actualCost * 0.65), 0) * 0.01 / 10000
-
-    const actualProfitRate = totalContractAmount > 0
-      ? ((totalContractAmount - actualCost) / totalContractAmount) * 100
-      : 0
+      s + (p.totalPlanDeliveryCost - p.actualDeliveryCost), 0) * 0.01 / 10000
 
     return {
       name,
@@ -435,18 +383,12 @@ export function getSalesTargets(): SalesTarget[] {
       totalReceivedPayment,
       totalPlanCost,
       totalPlanDeliveryCost,
-      totalPlanExternalCost,
       totalPlanBusinessCost,
       actualCost,
       actualDeliveryCost,
-      deliveryCostRatio: Math.round(deliveryCostRatio * 10) / 10,
-      deliveryEfficiency: Math.round(deliveryEfficiency * 100) / 100,
+      deliveryCostRatio,
+      deliveryCostProgress,
       contributionValue: Math.round(contributionValue * 100) / 100,
-      // 兼容旧字段
-      planRevenue: totalContractAmount,
-      actualRevenue: totalReceivedPayment,
-      planProfitRate: 25,
-      actualProfitRate: Math.round(actualProfitRate),
     }
   })
 }
@@ -460,38 +402,24 @@ export function getPMSummaries(): PMSummary[] {
     const totalReceivedPayment = pmProjects.reduce((s, p) => s + p.receivedPayment, 0)
     const totalPlanCost = pmProjects.reduce((s, p) => s + p.totalPlanCost, 0)
     const totalPlanDeliveryCost = pmProjects.reduce((s, p) => s + p.totalPlanDeliveryCost, 0)
-    const totalPlanExternalCost = pmProjects.reduce((s, p) => s + p.totalPlanExternalCost, 0)
     const totalPlanBusinessCost = pmProjects.reduce((s, p) => s + p.totalPlanBusinessCost, 0)
     const actualCost = pmProjects.reduce((s, p) => s + p.actualCost, 0)
-    const actualDeliveryCost = pmProjects.reduce((s, p) => s + (p.costBreakdown?.internalHR || 0) + (p.costBreakdown?.externalHR || 0), 0)
+    const actualDeliveryCost = pmProjects.reduce((s, p) => s + p.actualDeliveryCost, 0)
 
-    // 直接使用项目中计算好的交付成本占比，取平均值
-    const deliveryCostRatio = pmProjects.length > 0
-      ? pmProjects.reduce((s, p) => s + p.deliveryCostRatio, 0) / pmProjects.length
+    // 交付成本占比 = ∑实际交付成本 / ∑实际总成本
+    const deliveryCostRatio = actualCost > 0
+      ? Math.round((actualDeliveryCost / actualCost) * 100 * 10) / 10
       : 0
 
-    const avgProgress = pmProjects.length > 0
-      ? pmProjects.reduce((s, p) => s + p.progress, 0) / pmProjects.length
-      : 0
-    const deliveryEfficiency = actualDeliveryCost > 0
-      ? (totalPlanDeliveryCost * avgProgress / 100) / actualDeliveryCost
+    // 交付成本消耗进度 = ∑实际交付成本 / ∑总计划交付成本 × 100
+    const deliveryCostProgress = totalPlanDeliveryCost > 0
+      ? Math.round((actualDeliveryCost / totalPlanDeliveryCost) * 100 * 10) / 10
       : 0
 
-    // 贡献值
+    // 贡献值 = 1% × ∑(计划交付成本 - 实际交付成本)，仅统计已结项
     const closedProjects = pmProjects.filter(p => p.status === '已结项')
     const contributionValue = closedProjects.reduce((s, p) =>
-      s + (p.totalPlanCost - p.actualCost * 0.65), 0) * 0.01 / 10000
-
-    // 外采占比
-    const totalExternalHR = pmProjects.reduce((s, p) => s + (p.costBreakdown?.externalHR || 0), 0)
-    const externalHRRatio = totalContractAmount > 0
-      ? (totalExternalHR / totalContractAmount) * 100
-      : 0
-
-    const estimatedProfit = totalContractAmount - actualCost
-    const estimatedProfitRate = totalContractAmount > 0
-      ? (estimatedProfit / totalContractAmount) * 100
-      : 0
+      s + (p.totalPlanDeliveryCost - p.actualDeliveryCost), 0) * 0.01 / 10000
 
     return {
       pm,
@@ -500,19 +428,12 @@ export function getPMSummaries(): PMSummary[] {
       totalReceivedPayment,
       totalPlanCost,
       totalPlanDeliveryCost,
-      totalPlanExternalCost,
       totalPlanBusinessCost,
       actualCost,
       actualDeliveryCost,
-      deliveryCostRatio: Math.round(deliveryCostRatio * 10) / 10,
-      deliveryEfficiency: Math.round(deliveryEfficiency * 100) / 100,
+      deliveryCostRatio,
+      deliveryCostProgress,
       contributionValue: Math.round(contributionValue * 100) / 100,
-      // 兼容旧字段
-      estimatedCost: actualCost,
-      estimatedProfit,
-      estimatedProfitRate: Math.round(estimatedProfitRate),
-      externalHRRatio: Math.round(externalHRRatio * 10) / 10,
-      externalHRRatioLimit: DEPT_CONFIG.externalHRRatioLimit * 100,
     }
   })
 }
@@ -525,11 +446,9 @@ export function getOverview(): DepartmentOverview {
 
   const totalPlanCost = projects.reduce((s, p) => s + p.totalPlanCost, 0)
   const totalActualCost = projects.reduce((s, p) => s + p.actualCost, 0)
-
-  const totalInternalHR = projects.reduce((s, p) => s + (p.costBreakdown?.internalHR || 0), 0)
-  const totalExternalHR = projects.reduce((s, p) => s + (p.costBreakdown?.externalHR || 0), 0)
-  const totalBusinessCost = projects.reduce((s, p) => s + (p.costBreakdown?.businessCost || 0), 0)
-  const totalOtherCost = projects.reduce((s, p) => s + (p.costBreakdown?.otherCost || 0), 0)
+  const totalActualDeliveryCost = projects.reduce((s, p) => s + p.actualDeliveryCost, 0)
+  const totalActualBusinessCost = projects.reduce((s, p) => s + p.totalPlanBusinessCost, 0)
+  const totalInternalCost = Math.max(totalActualCost - totalActualDeliveryCost - totalActualBusinessCost, 0)
 
   const costRatio = contractRevenue > 0 ? (totalPlanCost / contractRevenue) * 100 : 0
   const costRatioLimit = 30
@@ -554,55 +473,44 @@ export function getOverview(): DepartmentOverview {
     return { key, name, level, plan, actual, q1, q2, current, remaining, usagePct, isInternal, children }
   }
 
-  // 成本分类（基于实际数据计算，确保使用进度合理）
+  // 成本分类（基于实际数据计算）
   const costCategories: CostCategory[] = (() => {
-    // 计算各类成本的汇总
-    const totalPlanExternalHR = projects.reduce((s, p) => s + p.totalPlanExternalCost, 0)
-    const totalPlanBusiness = projects.reduce((s, p) => s + p.totalPlanBusinessCost, 0)
-    const totalPlanInternal = totalPlanCost - totalPlanExternalHR - totalPlanBusiness
+    // 按比例分配交付成本到外部门和外采（6:4）
+    const deliveryExternalDept = Math.round(totalActualDeliveryCost * 0.6)
+    const deliveryExternalProcurement = totalActualDeliveryCost - deliveryExternalDept
+    // 按比例分配商务成本到外采和集采（2:1）
+    const businessExternalProcurement = Math.round(totalActualBusinessCost * 0.67)
+    const businessCentralProcurement = totalActualBusinessCost - businessExternalProcurement
 
-    // 三级子项 - 使用进度：外采成本最高，其他控制在50%以内
-    // 外部门成本：使用进度 ~45%
-    const deliveryExternalHR = createCostNode('external-delivery-external', '外部门成本', 3,
-      Math.round(totalExternalHR * 2.2),   // 计划约为实际的2.2倍，使用进度约45%
-      totalExternalHR)
-    // 外采成本：使用进度最高 ~85%
+    // 三级子项
+    const deliveryDept = createCostNode('external-delivery-dept', '外部门成本', 3,
+      Math.round(deliveryExternalDept * 2.2), deliveryExternalDept)
     const deliveryOutsource = createCostNode('external-delivery-outsource', '外采成本', 3,
-      Math.round(totalExternalHR * 1.18),  // 计划约为实际的1.18倍，使用进度约85%
-      totalExternalHR)
-    // 商务外采：使用进度 ~40%
+      Math.round(deliveryExternalProcurement * 1.18), deliveryExternalProcurement)
     const businessOutsource = createCostNode('external-business-outsource', '外采成本', 3,
-      Math.round(totalBusinessCost * 2.5),
-      totalBusinessCost)
-    // 集采成本：使用进度 ~35%
+      Math.round(businessExternalProcurement * 2.5), businessExternalProcurement)
     const businessCentral = createCostNode('external-business-central', '集采成本', 3,
-      Math.round(totalBusinessCost * 2.8),
-      Math.round(totalBusinessCost * 0.98))
+      Math.round(businessCentralProcurement * 2.8), Math.round(businessCentralProcurement * 0.98))
 
-    // 二级父项（子项之和）
+    // 二级父项
     const deliveryCost = createCostNode('external-delivery', '交付成本', 2,
-      deliveryExternalHR.plan + deliveryOutsource.plan,
-      deliveryExternalHR.actual + deliveryOutsource.actual,
-      false,
-      [deliveryExternalHR, deliveryOutsource])
+      deliveryDept.plan + deliveryOutsource.plan,
+      deliveryDept.actual + deliveryOutsource.actual,
+      false, [deliveryDept, deliveryOutsource])
     const businessCost = createCostNode('external-business', '商务成本', 2,
       businessOutsource.plan + businessCentral.plan,
       businessOutsource.actual + businessCentral.actual,
-      false,
-      [businessOutsource, businessCentral])
+      false, [businessOutsource, businessCentral])
 
-    // 一级外部成本（子项之和）
+    // 一级外部成本
     const externalCost = createCostNode('external', '外部成本', 1,
       deliveryCost.plan + businessCost.plan,
       deliveryCost.actual + businessCost.actual,
-      false,
-      [deliveryCost, businessCost])
+      false, [deliveryCost, businessCost])
 
-    // 一级内部成本 - 使用进度 ~42%
-    const internalActual = totalInternalHR + totalOtherCost
+    // 一级内部成本（灰色显示）
     const internalCost = createCostNode('internal', '内部成本', 1,
-      Math.round(internalActual * 2.4),  // 使用进度约42%
-      internalActual, true)
+      Math.round(totalInternalCost * 2.4), totalInternalCost, true)
 
     return [externalCost, internalCost]
   })()
