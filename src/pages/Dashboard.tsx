@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Card, Progress, Table } from '@douyinfe/semi-ui'
+import { Card, Progress, Table, Tooltip } from '@douyinfe/semi-ui'
 import ReactECharts from 'echarts-for-react'
 import type { DepartmentOverview, CostCategory } from '../mockData'
 import { fmtAmountShort } from '../utils/format'
@@ -398,6 +398,23 @@ interface V8CostCardProps {
 }
 
 function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLimit, progress }: V8CostCardProps) {
+  const alertTooltip = `基准值 ${costRatioLimit}%（计划成本/签约收入）`
+
+  // 感叹号图标（与Tooltip配合使用）
+  const InfoIcon = ({ color }: { color: string }) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, cursor: 'help' }}>
+      <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
+      <path d="M12 16v-4m0-4h.01" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+
+  // 预警感叹号图标
+  const WarningIcon = ({ color }: { color: string }) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, cursor: 'help' }}>
+      <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+
   return (
     <div style={{
       backgroundColor: COLORS.card,
@@ -405,7 +422,7 @@ function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLim
       padding: SPACING.xl,
       border: `1px solid ${COLORS.border}`,
       boxShadow: SHADOWS.card,
-      borderTop: `3px solid ${isOverLimit ? COLORS.danger : COLORS.success}`,
+      borderTop: `3px solid ${isOverLimit ? COLORS.danger : COLORS.primary}`,
     }}>
       <div style={TEXT_STYLES.label}>成本</div>
 
@@ -414,20 +431,27 @@ function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLim
         <div>
           <div style={{ fontSize: 12, color: COLORS.textTertiary, marginBottom: 4 }}>计划成本</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 24, fontWeight: 700, color: isOverLimit ? COLORS.danger : COLORS.success }}>
+            <span style={{ fontSize: 24, fontWeight: 700, color: isOverLimit ? COLORS.danger : COLORS.textPrimary }}>
               {fmtAmountShort(planCost)} <span style={{ fontSize: 13, fontWeight: 500 }}>万</span>
             </span>
-            <span style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: isOverLimit ? COLORS.danger : COLORS.success,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}>
-              ({costRatio.toFixed(0)}%)
-              {isOverLimit && <AlertIcon />}
-            </span>
+            <Tooltip content={alertTooltip} position="top">
+              <span style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: isOverLimit ? COLORS.danger : COLORS.textSecondary,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+                ({costRatio.toFixed(0)}%)
+                <span style={{ display: 'inline-flex' }}>
+                  {isOverLimit
+                    ? <WarningIcon color={COLORS.danger} />
+                    : <InfoIcon color={COLORS.textTertiary} />
+                  }
+                </span>
+              </span>
+            </Tooltip>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -436,11 +460,6 @@ function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLim
             {fmtAmountShort(actualCost)} <span style={{ fontSize: 12 }}>万</span>
           </div>
         </div>
-      </div>
-
-      {/* 基准说明 */}
-      <div style={{ marginTop: 12, fontSize: 12, color: COLORS.textTertiary }}>
-        基准值 {costRatioLimit}%（计划成本/签约收入）
       </div>
 
       {/* 进度条 */}
@@ -452,7 +471,7 @@ function V8CostCard({ planCost, actualCost, costRatio, costRatioLimit, isOverLim
         <Progress
           percent={Math.min(progress, 100)}
           showInfo={false}
-          stroke={progress > 100 ? COLORS.danger : progress > 80 ? COLORS.warning : COLORS.success}
+          stroke={progress > 100 ? COLORS.danger : COLORS.success}
           style={{ height: 8, borderRadius: 4 }}
         />
       </div>
@@ -575,9 +594,9 @@ function CostCategoryTable({ data }: { data: CostCategory[] }) {
     {
       title: '成本类型',
       dataIndex: 'category',
-      width: 200,
+      width: 80,
       render: (text, record) => {
-        const indent = (record.level - 1) * 20
+        const indent = (record.level - 1) * 16
         const isInternal = record.isInternal
         return (
           <span style={{
@@ -595,7 +614,7 @@ function CostCategoryTable({ data }: { data: CostCategory[] }) {
     {
       title: '计划金额（万元）',
       dataIndex: 'plan',
-      width: 120,
+      width: 100,
       align: 'right',
       render: (val, record) => (
         <span style={{

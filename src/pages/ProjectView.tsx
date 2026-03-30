@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Card, Table, Tag, Input, Progress, Select } from '@douyinfe/semi-ui'
+import ReactECharts from 'echarts-for-react'
 import type { Project, PMSummary } from '../mockData'
 import { generatePMSummaries } from '../mockData'
 import { fmtAmountShort } from '../utils/format'
@@ -144,15 +145,14 @@ export default function ProjectView({ projects }: Props) {
       title: '整体交付效率',
       width: 100,
       render: (_: unknown, record: PMSummary & { isTotalRow?: boolean }) => {
-        const eff = record.deliveryEfficiency
-        const status = eff > 1 ? 'excellent' : eff >= 1 ? 'good' : 'warning'
-        const color = status === 'excellent' ? COLORS.success : status === 'good' ? COLORS.primary : COLORS.warning
-        const label = status === 'excellent' ? '优秀' : status === 'good' ? '达标' : '预警'
-        // 合计行也显示状态标签
+        const eff = record.deliveryCostProgress
+        const overLimit = eff > 100
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 600, fontSize: 13, color }}>{eff.toFixed(2)}</span>
-            <span style={{ fontSize: 11, color, backgroundColor: `${color}20`, padding: '2px 6px', borderRadius: 4 }}>{label}</span>
+            <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
+              {eff.toFixed(1)}%
+            </span>
+            {overLimit && !record.isTotalRow && <AlertIconSmall />}
           </div>
         )
       },
@@ -199,9 +199,9 @@ export default function ProjectView({ projects }: Props) {
       },
     },
     {
-      title: <TableHeader main="签约金额" unit="万元" />,
+      title: <TableHeader main="签约总金额" unit="万元" />,
       dataIndex: 'contractAmount',
-      width: 100,
+      width: 110,
       align: 'right' as const,
       sorter: (a?: Project, b?: Project) => (a?.contractAmount || 0) - (b?.contractAmount || 0),
       render: (v: number) => fmtAmountShort(v),
@@ -209,44 +209,45 @@ export default function ProjectView({ projects }: Props) {
     {
       title: <TableHeader main="已回款金额" unit="万元" />,
       dataIndex: 'receivedPayment',
-      width: 100,
+      width: 110,
       align: 'right' as const,
       sorter: (a?: Project, b?: Project) => (a?.receivedPayment || 0) - (b?.receivedPayment || 0),
       render: (v: number) => fmtAmountShort(v),
     },
     {
-      title: <TableHeader main="计划成本" unit="万元" />,
+      title: <TableHeader main="总计划成本" unit="万元" />,
       dataIndex: 'totalPlanCost',
-      width: 90,
-      align: 'right' as const,
-      render: (v: number, record: Project) => (
-        <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v || record.actualCost * 0.95)}</span>
-      ),
-    },
-    {
-      title: <TableHeader main="计划外采成本" unit="万元" />,
-      dataIndex: 'totalPlanExternalCost',
       width: 110,
       align: 'right' as const,
-      render: (v: number, record: Project) => (
-        <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v || record.costBreakdown?.externalHR || 0)}</span>
-      ),
+      render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: <TableHeader main="计划商务成本" unit="万元" />,
-      dataIndex: 'totalPlanBusinessCost',
+      title: <TableHeader main="总计划交付成本" unit="万元" />,
+      dataIndex: 'totalPlanDeliveryCost',
       width: 120,
       align: 'right' as const,
-      render: (v: number, record: Project) => (
-        <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v || record.costBreakdown?.businessCost || 0)}</span>
-      ),
+      render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
+    },
+    {
+      title: <TableHeader main="实际总成本" unit="万元" />,
+      dataIndex: 'actualCost',
+      width: 110,
+      align: 'right' as const,
+      render: (v: number) => <span style={{ fontWeight: 600 }}>{fmtAmountShort(v)}</span>,
+    },
+    {
+      title: <TableHeader main="实际交付成本" unit="万元" />,
+      dataIndex: 'actualDeliveryCost',
+      width: 120,
+      align: 'right' as const,
+      render: (v: number) => <span style={{ fontWeight: 500 }}>{fmtAmountShort(v)}</span>,
     },
     {
       title: '交付成本占比',
       width: 110,
-      render: (_: unknown, record: Project) => {
-        const ratio = record.deliveryCostRatio || (record.actualCost > 0 ? 65 : 0)
-        const overLimit = ratio > 30
+      render: (_: unknown, record: Project & { isTotalRow?: boolean }) => {
+        const ratio = record.deliveryCostRatio
+        const overLimit = ratio > (record.externalHRRatioLimit || 30)
         return (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -257,7 +258,28 @@ export default function ProjectView({ projects }: Props) {
             <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
               {ratio.toFixed(1)}%
             </span>
-            {overLimit && <AlertIconSmall />}
+            {overLimit && !record.isTotalRow && <AlertIconSmall />}
+          </div>
+        )
+      },
+    },
+    {
+      title: '交付成本消耗进度',
+      width: 120,
+      render: (_: unknown, record: Project & { isTotalRow?: boolean }) => {
+        const progress = record.deliveryCostProgress
+        const overLimit = progress > 100
+        return (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '2px 6px', borderRadius: 4, minWidth: 60,
+            justifyContent: 'center',
+            backgroundColor: overLimit ? COLORS.bgRed : COLORS.bgGreen,
+          }}>
+            <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
+              {progress.toFixed(1)}%
+            </span>
+            {overLimit && !record.isTotalRow && <AlertIconSmall />}
           </div>
         )
       },
@@ -266,21 +288,19 @@ export default function ProjectView({ projects }: Props) {
       title: '项目进度',
       dataIndex: 'progress',
       width: 100,
-      render: (v: number) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Progress percent={Math.round(v)} showInfo={false} size="small" stroke={COLORS.primary} style={{ flex: 1 }} />
-          <span style={{ fontSize: 12, color: COLORS.textTertiary, minWidth: 36 }}>{Math.round(v)}%</span>
-        </div>
-      ),
-    },
-    {
-      title: '交付成本效率',
-      width: 90,
-      render: (_: unknown, record: Project) => {
-        const eff = record.deliveryEfficiency || 1
-        const status = eff > 1 ? 'excellent' : eff >= 1 ? 'good' : 'warning'
-        const color = status === 'excellent' ? COLORS.success : status === 'good' ? COLORS.primary : COLORS.warning
-        return <span style={{ fontWeight: 600, fontSize: 13, color }}>{eff.toFixed(2)}</span>
+      render: (v: number, record: Project & { isTotalRow?: boolean }) => {
+        // 预警：交付成本消耗进度 > 项目进度
+        const warning = !record.isTotalRow && record.deliveryCostProgress > v
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Progress percent={Math.round(v)} showInfo={false} size="small"
+              stroke={warning ? COLORS.danger : COLORS.primary} style={{ flex: 1 }} />
+            <span style={{ fontSize: 12, color: warning ? COLORS.danger : COLORS.textTertiary, minWidth: 36 }}>
+              {Math.round(v)}%
+            </span>
+            {warning && <AlertIconSmall />}
+          </div>
+        )
       },
     },
   ]
@@ -307,31 +327,38 @@ export default function ProjectView({ projects }: Props) {
   // PM 表格总计数据
   const pmTotals = useMemo(() => {
     const data = pmSummaries
+    const totalActualCost = data.reduce((s, r) => s + r.actualCost, 0)
+    const totalActualDeliveryCost = data.reduce((s, r) => s + r.actualDeliveryCost, 0)
+    const totalPlanDeliveryCost = data.reduce((s, r) => s + r.totalPlanDeliveryCost, 0)
     return {
       projectCount: data.reduce((s, r) => s + r.projectCount, 0),
       totalContractAmount: data.reduce((s, r) => s + r.totalContractAmount, 0),
       totalReceivedPayment: data.reduce((s, r) => s + r.totalReceivedPayment, 0),
       totalPlanCost: data.reduce((s, r) => s + r.totalPlanCost, 0),
-      totalPlanDeliveryCost: data.reduce((s, r) => s + r.totalPlanDeliveryCost, 0),
-      actualCost: data.reduce((s, r) => s + r.actualCost, 0),
-      actualDeliveryCost: data.reduce((s, r) => s + r.actualDeliveryCost, 0),
-      deliveryCostRatio: data.length > 0 ? data.reduce((s, r) => s + r.deliveryCostRatio, 0) / data.length : 0,
-      deliveryEfficiency: data.length > 0 ? data.reduce((s, r) => s + r.deliveryEfficiency, 0) / data.length : 0,
+      totalPlanDeliveryCost,
+      actualCost: totalActualCost,
+      actualDeliveryCost: totalActualDeliveryCost,
+      deliveryCostRatio: totalActualCost > 0 ? Math.round((totalActualDeliveryCost / totalActualCost) * 100 * 10) / 10 : 0,
+      deliveryCostProgress: totalPlanDeliveryCost > 0 ? Math.round((totalActualDeliveryCost / totalPlanDeliveryCost) * 100 * 10) / 10 : 0,
       contributionValue: data.reduce((s, r) => s + r.contributionValue, 0),
     }
   }, [pmSummaries])
 
   // 项目表格总计数据（基于筛选后的数据）
   const projectTotals = useMemo(() => {
+    const contractAmount = filtered.reduce((s, p) => s + p.contractAmount, 0)
+    const receivedPayment = filtered.reduce((s, p) => s + p.receivedPayment, 0)
+    const totalPlanCost = filtered.reduce((s, p) => s + p.totalPlanCost, 0)
+    const totalPlanDeliveryCost = filtered.reduce((s, p) => s + p.totalPlanDeliveryCost, 0)
+    const totalPlanBusinessCost = filtered.reduce((s, p) => s + p.totalPlanBusinessCost, 0)
+    const actualCost = filtered.reduce((s, p) => s + p.actualCost, 0)
+    const actualDeliveryCost = filtered.reduce((s, p) => s + p.actualDeliveryCost, 0)
+    const deliveryCostRatio = actualCost > 0 ? Math.round((actualDeliveryCost / actualCost) * 100 * 10) / 10 : 0
+    const deliveryCostProgress = totalPlanDeliveryCost > 0 ? Math.round((actualDeliveryCost / totalPlanDeliveryCost) * 100 * 10) / 10 : 0
+    const progress = filtered.length > 0 ? Math.round(filtered.reduce((s, p) => s + p.progress, 0) / filtered.length) : 0
     return {
-      contractAmount: filtered.reduce((s, p) => s + p.contractAmount, 0),
-      receivedPayment: filtered.reduce((s, p) => s + p.receivedPayment, 0),
-      totalPlanCost: filtered.reduce((s, p) => s + (p.totalPlanCost || p.actualCost * 0.95), 0),
-      totalPlanExternalCost: filtered.reduce((s, p) => s + (p.totalPlanExternalCost || p.costBreakdown?.externalHR || 0), 0),
-      totalPlanBusinessCost: filtered.reduce((s, p) => s + (p.totalPlanBusinessCost || p.costBreakdown?.businessCost || 0), 0),
-      deliveryCostRatio: filtered.length > 0 ? filtered.reduce((s, p) => s + (p.deliveryCostRatio || 65), 0) / filtered.length : 0,
-      progress: filtered.length > 0 ? filtered.reduce((s, p) => s + p.progress, 0) / filtered.length : 0,
-      deliveryEfficiency: filtered.length > 0 ? filtered.reduce((s, p) => s + (p.deliveryEfficiency || 1), 0) / filtered.length : 0,
+      contractAmount, receivedPayment, totalPlanCost, totalPlanDeliveryCost, totalPlanBusinessCost,
+      actualCost, actualDeliveryCost, deliveryCostRatio, deliveryCostProgress, progress,
     }
   }, [filtered])
 
@@ -340,7 +367,7 @@ export default function ProjectView({ projects }: Props) {
       {/* 第一块：项目分布看板 - V8 三张 KPI 卡片 */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: '1fr 1fr 2fr',
         gap: SPACING.lg,
         marginBottom: SPACING.xl,
       }}>
@@ -386,31 +413,65 @@ export default function ProjectView({ projects }: Props) {
           borderTop: `3px solid ${COLORS.success}`,
         }}>
           <div style={TEXT_STYLES.label}>新增项目</div>
-          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ fontSize: 32, fontWeight: 700, color: COLORS.success }}>{newProjects}</div>
               <div style={{ fontSize: 12, color: COLORS.textTertiary, marginTop: 4 }}>个项目</div>
+              <div style={{ marginTop: 8, display: 'flex', gap: 12, fontSize: 11, color: COLORS.textTertiary }}>
+                <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, backgroundColor: COLORS.chartPrimary, marginRight: 4 }} />交付中 {newDelivering}</span>
+                <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, backgroundColor: COLORS.success, marginRight: 4 }} />验收 {newAcceptanceDone}</span>
+                <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, backgroundColor: COLORS.chartTertiary, marginRight: 4 }} />运维 {newMaintenance}</span>
+                <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, backgroundColor: COLORS.textTertiary, marginRight: 4 }} />结项 {newClosed}</span>
+              </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 11, color: COLORS.textTertiary, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <span>交付中({newDelivering})</span>
-                <span>验收({newAcceptanceDone})</span>
-                <span>运维({newMaintenance})</span>
-                <span>结项({newClosed})</span>
-              </div>
-              <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: COLORS.border, width: 120 }}>
-                {[
-                  { value: newDelivering, color: COLORS.chartPrimary },
-                  { value: newAcceptanceDone, color: COLORS.success },
-                  { value: newMaintenance, color: COLORS.chartTertiary },
-                  { value: newClosed, color: COLORS.textTertiary },
-                ].map((item, i) => (
-                  <div key={i} style={{
-                    width: `${newProjects > 0 ? (item.value / newProjects) * 100 : 0}%`,
-                    backgroundColor: item.color,
-                  }} />
-                ))}
-              </div>
+              <ReactECharts
+                option={{
+                  tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: (params: { name: string; value: number }[]) => {
+                      return params.map(p => `${p.name}: ${p.value}个`).join('<br/>')
+                    },
+                  },
+                  grid: { left: 8, right: 8, top: 24, bottom: 32 },
+                  xAxis: {
+                    type: 'category',
+                    data: ['交付中', '验收完成', '运维中', '已结项'],
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    axisLabel: { fontSize: 10, color: COLORS.textTertiary, interval: 0 },
+                  },
+                  yAxis: {
+                    type: 'value',
+                    minInterval: 1,
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    axisLabel: { show: false },
+                    splitLine: { show: false },
+                  },
+                  series: [{
+                    type: 'bar',
+                    data: [
+                      { value: newDelivering, itemStyle: { color: COLORS.chartPrimary, borderRadius: [3, 3, 0, 0] } },
+                      { value: newAcceptanceDone, itemStyle: { color: COLORS.success, borderRadius: [3, 3, 0, 0] } },
+                      { value: newMaintenance, itemStyle: { color: COLORS.chartTertiary, borderRadius: [3, 3, 0, 0] } },
+                      { value: newClosed, itemStyle: { color: COLORS.textTertiary, borderRadius: [3, 3, 0, 0] } },
+                    ],
+                    barWidth: 20,
+                    label: {
+                      show: true,
+                      position: 'top',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: COLORS.textSecondary,
+                      distance: 4,
+                    },
+                  }],
+                }}
+                style={{ height: 110, width: 220 }}
+                opts={{ renderer: 'svg' }}
+              />
             </div>
           </div>
         </div>
@@ -445,7 +506,7 @@ export default function ProjectView({ projects }: Props) {
                 actualCost: pmTotals.actualCost,
                 actualDeliveryCost: pmTotals.actualDeliveryCost,
                 deliveryCostRatio: pmTotals.deliveryCostRatio,
-                deliveryEfficiency: pmTotals.deliveryEfficiency,
+                deliveryCostProgress: pmTotals.deliveryCostProgress,
                 contributionValue: pmTotals.contributionValue,
                 isTotalRow: true,
               } as PMSummary & { isTotalRow: boolean },
@@ -518,14 +579,15 @@ export default function ProjectView({ projects }: Props) {
                 contractAmount: projectTotals.contractAmount,
                 receivedPayment: projectTotals.receivedPayment,
                 totalPlanCost: projectTotals.totalPlanCost,
-                totalPlanExternalCost: projectTotals.totalPlanExternalCost,
+                totalPlanDeliveryCost: projectTotals.totalPlanDeliveryCost,
                 totalPlanBusinessCost: projectTotals.totalPlanBusinessCost,
-                actualCost: 0,
+                actualCost: projectTotals.actualCost,
+                actualDeliveryCost: projectTotals.actualDeliveryCost,
                 deliveryCostRatio: projectTotals.deliveryCostRatio,
+                deliveryCostProgress: projectTotals.deliveryCostProgress,
                 progress: projectTotals.progress,
-                deliveryEfficiency: projectTotals.deliveryEfficiency,
                 planProfitRate: 0,
-                externalHRRatioLimit: 0,
+                externalHRRatioLimit: 30,
                 isTotalRow: true,
               } as Project & { isTotalRow: boolean },
             ]}

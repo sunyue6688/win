@@ -58,8 +58,8 @@ function createColumns(): ColumnProps<SalesTarget>[] {
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: <TableHeader main="计划交付成本" unit="万元" />,
-      dataIndex: 'totalPlanDeliveryCost',
+      title: <TableHeader main="计划商务成本" unit="万元" />,
+      dataIndex: 'totalPlanBusinessCost',
       width: 110,
       align: 'right' as const,
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
@@ -72,39 +72,11 @@ function createColumns(): ColumnProps<SalesTarget>[] {
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
     },
     {
-      title: <TableHeader main="实际交付成本" unit="万元" />,
+      title: <TableHeader main="实际商务成本" unit="万元" />,
       dataIndex: 'actualDeliveryCost',
       width: 110,
       align: 'right' as const,
       render: (v: number) => <span style={{ color: COLORS.textSecondary }}>{fmtAmountShort(v)}</span>,
-    },
-    {
-      title: '交付成本占比',
-      dataIndex: 'deliveryCostRatio',
-      width: 110,
-      align: 'right' as const,
-      render: (v: number) => {
-        const overLimit = v > 30  // 超过30%预警
-        return (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '2px 6px', borderRadius: 4, minWidth: 60,
-            justifyContent: 'center',
-            backgroundColor: overLimit ? COLORS.bgRed : COLORS.bgGreen,
-          }}>
-            <span style={{ fontWeight: 600, fontSize: 13, color: overLimit ? COLORS.danger : COLORS.success }}>
-              {v.toFixed(1)}%
-            </span>
-          </div>
-        )
-      },
-    },
-    {
-      title: <TableHeader main="贡献值" unit="万元" />,
-      dataIndex: 'contributionValue',
-      width: 90,
-      align: 'right' as const,
-      render: (v: number) => <span style={{ fontWeight: 600, color: COLORS.success }}>{v.toFixed(2)}</span>,
     },
   ]
 }
@@ -289,22 +261,18 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
     totalReceivedPayment,
     totalPlanCost: salesTargets.reduce((s, t) => s + t.totalPlanCost, 0),
     totalPlanDeliveryCost: salesTargets.reduce((s, t) => s + t.totalPlanDeliveryCost, 0),
+    totalPlanBusinessCost: salesTargets.reduce((s, t) => s + t.totalPlanBusinessCost, 0),
     actualCost: salesTargets.reduce((s, t) => s + t.actualCost, 0),
     actualDeliveryCost: salesTargets.reduce((s, t) => s + t.actualDeliveryCost, 0),
     deliveryCostRatio: 0,
-    deliveryEfficiency: 0,
+    deliveryCostProgress: 0,
     contributionValue: salesTargets.reduce((s, t) => s + t.contributionValue, 0),
-    // 旧字段兼容
-    planRevenue: 0,
-    actualRevenue: 0,
-    planProfitRate: 0,
-    actualProfitRate: 0,
   }
 
-  // 计算总计行的交付成本占比和效率
+  // 计算总计行的交付成本占比和消耗进度
   totalRow.deliveryCostRatio = totalRow.actualCost > 0 ? (totalRow.actualDeliveryCost / totalRow.actualCost) * 100 : 0
-  totalRow.deliveryEfficiency = totalRow.actualDeliveryCost > 0
-    ? (totalRow.totalPlanDeliveryCost / totalRow.actualDeliveryCost)
+  totalRow.deliveryCostProgress = totalRow.totalPlanDeliveryCost > 0
+    ? (totalRow.actualDeliveryCost / totalRow.totalPlanDeliveryCost) * 100
     : 0
 
   return (
