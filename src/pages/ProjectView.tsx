@@ -7,6 +7,7 @@ import { fmtAmountShort } from '../utils/format'
 import { COLORS, CARD_STYLES, TEXT_STYLES, SPACING, RADII, SHADOWS } from '../styles/theme'
 
 import type { TagColor } from '@douyinfe/semi-ui/lib/es/tag'
+import { useResponsiveGrid } from '../hooks/useMediaQuery'
 
 // 统一表头断行组件
 function TableHeader({ main, unit }: { main: string; unit: string }) {
@@ -35,6 +36,7 @@ export default function ProjectView({ projects }: Props) {
   const [searchText, setSearchText] = useState('')
   const [pmFilter, setPmFilter] = useState<string>('全部')
   const [salesFilter, setSalesFilter] = useState<string>('全部')
+  const kpiCols = useResponsiveGrid('1fr 1fr 2fr', '1fr 1fr', '1fr')
 
   // PM 汇总数据
   const pmSummaries = useMemo(() => generatePMSummaries(), [projects])
@@ -367,7 +369,7 @@ export default function ProjectView({ projects }: Props) {
       {/* 第一块：项目分布看板 - V8 三张 KPI 卡片 */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 2fr',
+        gridTemplateColumns: kpiCols,
         gap: SPACING.lg,
         marginBottom: SPACING.xl,
       }}>

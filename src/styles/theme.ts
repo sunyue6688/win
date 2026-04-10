@@ -4,11 +4,11 @@
  */
 
 /**
- * 字体配置
+ * 字体配置 - 与 index.css CSS 变量保持一致 (Manrope)
  */
-export const FONTS = {
-  heading: '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif',
-  body: '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif',
+export const FONT_FAMILY = {
+  heading: "'Manrope', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+  body: "'Manrope', 'PingFang SC', 'Microsoft YaHei', sans-serif",
   mono: 'ui-monospace, Consolas, monospace',
 } as const
 
@@ -169,6 +169,28 @@ export const PROGRESS_COLORS = {
  * 文字样式
  */
 export const TEXT_STYLES = {
+  // -- Heading hierarchy --
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: COLORS.textPrimary,
+    letterSpacing: -0.01,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: COLORS.textPrimary,
+  },
+  subsectionTitle: {
+    fontSize: 14,
+    fontWeight: 600,
+    lineHeight: 1.5,
+    color: COLORS.textPrimary,
+  },
+
+  // -- Existing styles --
   title: {
     fontSize: 18,
     fontWeight: 600,
@@ -182,6 +204,11 @@ export const TEXT_STYLES = {
   body: {
     fontSize: 14,
     fontWeight: 400,
+    color: COLORS.textSecondary,
+  },
+  bodyMedium: {
+    fontSize: 13,
+    fontWeight: 500,
     color: COLORS.textSecondary,
   },
   caption: {

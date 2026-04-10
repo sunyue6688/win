@@ -5,6 +5,7 @@ import type { SalesTarget, Project } from '../mockData'
 import { fmtAmountShort } from '../utils/format'
 import { COLORS, TEXT_STYLES, SPACING, RADII, SHADOWS } from '../styles/theme'
 import type { ColumnProps } from '@douyinfe/semi-ui/lib/es/table'
+import { useResponsiveGrid } from '../hooks/useMediaQuery'
 
 interface Props {
   salesTargets: SalesTarget[]
@@ -83,6 +84,7 @@ function createColumns(): ColumnProps<SalesTarget>[] {
 
 export default function SalesView({ salesTargets, projects = [] }: Props) {
   const [chartView, setChartView] = useState<'treemap' | 'sunburst'>('treemap')
+  const kpiCols = useResponsiveGrid('repeat(3, 1fr)', '1fr 1fr', '1fr')
 
   // V8 KPI 计算
   const totalContractAmount = salesTargets.reduce((s, t) => s + t.totalContractAmount, 0)
@@ -280,7 +282,7 @@ export default function SalesView({ salesTargets, projects = [] }: Props) {
       {/* V8 第一行：3 张 KPI 卡片 */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: kpiCols,
         gap: SPACING.lg,
         marginBottom: SPACING.xl,
       }}>

@@ -14,6 +14,7 @@ import {
 } from '@douyinfe/semi-icons'
 import { fmtDateTime } from '../utils/format'
 import { COLORS, SIDEBAR_STYLES, SPACING } from '../styles/theme'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 // 品牌图标组件
 function BrandLogo({ collapsed }: { collapsed: boolean }) {
@@ -91,6 +92,7 @@ export default function AppShell({
 }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [aiModalVisible, setAiModalVisible] = useState(false)
+  const { isMobile } = useMediaQuery()
 
   const handleExport = () => {
     Toast.info('导出功能开发中...')
@@ -115,7 +117,7 @@ export default function AppShell({
           height: '100vh',
           borderRight: `1px solid ${COLORS.border}`,
           transition: 'width 0.2s ease',
-          overflow: 'auto',
+          overflow: 'hidden',
           position: 'sticky',
           top: 0,
         }}
@@ -164,10 +166,13 @@ export default function AppShell({
             borderBottom: `1px solid ${COLORS.border}`,
             display: 'flex',
             alignItems: 'center',
-            padding: `0 ${SPACING.xxl}px`,
-            height: 64,
+            padding: `0 ${isMobile ? SPACING.md : SPACING.xxl}px`,
+            height: isMobile ? 'auto' : 64,
+            minHeight: 64,
             flexShrink: 0,
             justifyContent: 'space-between',
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
+            gap: isMobile ? 8 : 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -177,19 +182,21 @@ export default function AppShell({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              color: COLORS.textTertiary,
-              fontSize: 13,
-              padding: '6px 10px',
-              backgroundColor: COLORS.hover,
-              borderRadius: 6,
-            }}>
-              <IconRefresh style={{ fontSize: 14 }} />
-              <span>{fmtDateTime(lastUpdate)}</span>
-            </div>
+            {!isMobile && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                color: COLORS.textTertiary,
+                fontSize: 13,
+                padding: '6px 10px',
+                backgroundColor: COLORS.hover,
+                borderRadius: 6,
+              }}>
+                <IconRefresh style={{ fontSize: 14 }} />
+                <span>{fmtDateTime(lastUpdate)}</span>
+              </div>
+            )}
 
             <Button
               theme="borderless"
@@ -197,17 +204,19 @@ export default function AppShell({
               onClick={onRefresh}
               style={{ color: COLORS.textSecondary }}
             >
-              刷新
+              {isMobile ? null : '刷新'}
             </Button>
 
-            <Button
-              theme="borderless"
-              icon={<IconDownload />}
-              onClick={handleExport}
-              style={{ color: COLORS.textSecondary }}
-            >
-              导出
-            </Button>
+            {!isMobile && (
+              <Button
+                theme="borderless"
+                icon={<IconDownload />}
+                onClick={handleExport}
+                style={{ color: COLORS.textSecondary }}
+              >
+                导出
+              </Button>
+            )}
 
             <Dropdown
               trigger="click"

@@ -6,6 +6,7 @@ import { fmtAmountShort } from '../utils/format'
 import { COLORS, SHADOWS, SPACING, TEXT_STYLES, RADII } from '../styles/theme'
 import type { ColumnProps } from '@douyinfe/semi-ui/lib/es/table'
 import type { MonthlyCost } from '../mockData'
+import { useResponsiveGrid } from '../hooks/useMediaQuery'
 
 // 警告图标组件
 function AlertIcon() {
@@ -185,6 +186,9 @@ function CostHeatmap({ data }: { data: CostCategory[] }) {
 }
 
 export default function Dashboard({ overview }: Props) {
+  const kpiCols = useResponsiveGrid('repeat(3, 1fr)', '1fr 1fr', '1fr')
+  const chartCols = useResponsiveGrid('1fr 1.5fr', '1fr', '1fr')
+
   // V8 KPI 计算逻辑
   const contractRevenue = overview.contractRevenue || overview.planRevenue
   const actualRevenue = overview.actualRevenue
@@ -324,18 +328,18 @@ export default function Dashboard({ overview }: Props) {
       padding: [10, 14],
       axisPointer: { type: 'shadow' },
     },
-    grid: { left: 100, right: 80, top: 20, bottom: 20 },
+    grid: { left: 110, right: 80, top: 20, bottom: 20 },
     xAxis: {
       type: 'value',
       axisLine: { show: false },
-      axisLabel: { formatter: '{value}万', color: COLORS.textTertiary, fontSize: 11 },
+      axisLabel: { formatter: '{value}万', color: COLORS.textSecondary, fontSize: 12 },
       splitLine: { lineStyle: { color: COLORS.divider, type: 'dashed' } },
     },
     yAxis: {
       type: 'category',
       data: flatCostData.map(item => item.name),
       axisLine: { lineStyle: { color: COLORS.border } },
-      axisLabel: { color: COLORS.textSecondary, fontSize: 12 },
+      axisLabel: { color: COLORS.textPrimary, fontSize: 12 },
     },
     series: [
       {
@@ -354,7 +358,7 @@ export default function Dashboard({ overview }: Props) {
           borderRadius: [0, 4, 4, 0],
           color: (params: { dataIndex: number }) => flatCostData[params.dataIndex]?.color || COLORS.chartPrimary,
         },
-        label: { show: true, position: 'right', formatter: '{c}万', fontSize: 11, color: COLORS.textSecondary },
+        label: { show: true, position: 'right', formatter: '{c}万', fontSize: 12, color: COLORS.textPrimary },
         data: flatCostData.map(item => item.actual),
       },
     ],
@@ -383,7 +387,7 @@ export default function Dashboard({ overview }: Props) {
       {/* KPI 卡片 - V8 三列布局 */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: kpiCols,
         gap: SPACING.lg,
         marginBottom: SPACING.xl,
       }}>
@@ -416,7 +420,7 @@ export default function Dashboard({ overview }: Props) {
       {/* 图表区域 - V8 成本结构 */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1.5fr',
+        gridTemplateColumns: chartCols,
         gap: SPACING.lg,
         marginBottom: SPACING.xl,
       }}>

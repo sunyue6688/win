@@ -179,31 +179,18 @@ button.semi-button,
   box-sizing: border-box;
 }
 
-h1,
-h2 {
+/* Semantic headings - aligned with TEXT_STYLES in theme.ts */
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading) !important;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
+h1 { font-size: 18px; line-height: 1.4; letter-spacing: -0.01em; }
+h2 { font-size: 16px; line-height: 1.4; }
+h3 { font-size: 14px; line-height: 1.5; }
+h4 { font-size: 13px; line-height: 1.5; }
+
 p {
   margin: 0;
 }
@@ -237,9 +224,9 @@ code {
 /* 平板及以下 - 侧边栏折叠 */
 @media (max-width: 1024px) {
   .semi-layout-sider {
-    width: 60px !important;
-    min-width: 60px !important;
-    max-width: 60px !important;
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
   }
 }
 
@@ -256,6 +243,10 @@ code {
   }
   .semi-layout-content {
     padding: 16px !important;
+  }
+  .semi-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -284,7 +275,7 @@ code {
 
 /* 按钮悬停效果 */
 .semi-button:hover {
-  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .semi-button-primary:hover {
