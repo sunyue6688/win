@@ -30,26 +30,13 @@ import { computeProjects } from './lib/costEngine'
 import { computeOverview } from './lib/computeOverview'
 
 function App() {
-  return (
-    <StoreProvider>
-      <AppContent />
-    </StoreProvider>
-  )
-}
-
-function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('win6688_isLoggedIn') === 'true'
   })
-  const [currentPage, setCurrentPage] = useState('dashboard')
-  const [userRole, setUserRole] = useState<UserRole>(() => {
-    return (localStorage.getItem('win6688_userRole') as UserRole) || 'boss'
-  })
-  const dataState = useStore()
 
   const handleLogin = (role: 'boss' | 'admin') => {
     setIsLoggedIn(true);
-    setUserRole(role === 'boss' ? 'boss' : 'pm'); // 映射到 AppShell 支持的角色
+    setUserRole(role === 'boss' ? 'boss' : 'pm');
     localStorage.setItem('win6688_isLoggedIn', 'true');
     localStorage.setItem('win6688_userRole', role === 'boss' ? 'boss' : 'pm');
   }
@@ -59,6 +46,24 @@ function AppContent() {
     localStorage.removeItem('win6688_isLoggedIn');
     localStorage.removeItem('win6688_userRole');
   }
+
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />
+  }
+
+  return (
+    <StoreProvider>
+      <AppContent onLogout={handleLogout} />
+    </StoreProvider>
+  )
+}
+
+function AppContent({ onLogout }: { onLogout: () => void }) {
+  const [currentPage, setCurrentPage] = useState('dashboard')
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    return (localStorage.getItem('win6688_userRole') as UserRole) || 'boss'
+  })
+  const dataState = useStore()
 
   // 计算全量项目数据
   const projects = useMemo(() => {
@@ -117,10 +122,6 @@ function AppContent() {
 
   const handleRefresh = () => {
     Toast.success('数据已刷新')
-  }
-
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={handleLogin} />
   }
 
   const navItems: NavItem[] = [
