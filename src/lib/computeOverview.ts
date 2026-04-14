@@ -3,7 +3,7 @@
  */
 
 import type { DataStoreState, ComputedProject } from './types';
-import { DepartmentOverview, CostCategory } from '../mockData';
+import type { DepartmentOverview, CostCategory } from '../mockData';
 
 /**
  * 聚合部门总览数据

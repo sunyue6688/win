@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { DataStoreState, DataStoreContextType, ColumnMapping } from './types';
+import type { DataStoreState, DataStoreContextType } from './types';
 import { supabase } from './supabase';
 import { Toast } from '@douyinfe/semi-ui';
 

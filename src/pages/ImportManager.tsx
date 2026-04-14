@@ -4,7 +4,7 @@ import { IconUpload, IconDelete, IconHistory, IconImport } from '@douyinfe/semi-
 import * as XLSX from 'xlsx';
 import { useStore } from '../lib/store';
 import { FILE_NAME_CONTAINS, TABLE_MAP_CONFIG } from '../lib/excelMapping';
-import { ColumnMapping } from '../lib/types';
+import type { ColumnMapping } from '../lib/types';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
