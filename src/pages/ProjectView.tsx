@@ -39,7 +39,41 @@ export default function ProjectView({ projects }: Props) {
   const kpiCols = useResponsiveGrid('1fr 1fr 2fr', '1fr 1fr', '1fr')
 
   // PM 汇总数据
-  const pmSummaries = useMemo(() => generatePMSummaries(), [projects])
+  const pmSummaries = useMemo<PMSummary[]>(() => {
+    const map = new Map<string, PMSummary>();
+    projects.forEach(p => {
+      const existing = map.get(p.pm) || {
+        pm: p.pm,
+        projectCount: 0,
+        totalContractAmount: 0,
+        totalReceivedPayment: 0,
+        totalPlanCost: 0,
+        totalPlanDeliveryCost: 0,
+        totalPlanBusinessCost: 0,
+        actualCost: 0,
+        actualDeliveryCost: 0,
+        deliveryCostRatio: 0,
+        deliveryCostProgress: 0,
+        contributionValue: 0
+      };
+      existing.projectCount += 1;
+      existing.totalContractAmount += p.contractAmount;
+      existing.totalReceivedPayment += p.receivedPayment;
+      existing.totalPlanCost += p.totalPlanCost;
+      existing.totalPlanDeliveryCost += p.totalPlanDeliveryCost;
+      existing.totalPlanBusinessCost += p.totalPlanBusinessCost;
+      existing.actualCost += p.actualCost;
+      existing.actualDeliveryCost += p.actualDeliveryCost;
+      map.set(p.pm, existing);
+    });
+
+    return Array.from(map.values()).map(s => ({
+      ...s,
+      deliveryCostRatio: s.actualCost > 0 ? (s.actualDeliveryCost / s.actualCost) * 100 : 0,
+      deliveryCostProgress: s.totalPlanDeliveryCost > 0 ? (s.actualDeliveryCost / s.totalPlanDeliveryCost) * 100 : 0,
+      contributionValue: s.totalContractAmount - s.actualCost
+    }));
+  }, [projects])
 
   // 获取所有 PM 和销售名
   const pmNames = useMemo(() => [...new Set(projects.map(p => p.pm))], [projects])
