@@ -166,7 +166,6 @@ export default function ImportManager() {
     setLoading(true);
     try {
       importData(preview.tableName, preview.rows, preview.fileName);
-      Toast.success(`成功导入 ${preview.rows.length} 条记录`);
       setPreview(null);
       setActiveTab('2'); // 切换到记录页
     } catch (err) {
