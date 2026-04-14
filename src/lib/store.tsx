@@ -175,6 +175,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const addStaff = async (staffMember: any) => {
+    try {
+      const row = { ...staffMember, is_active: '是' };
+      const { error } = await supabase.from('staff').insert(row);
+      if (error) throw error;
+      Toast.success('添加成功');
+      fetchAllData();
+    } catch (error: any) {
+      Toast.error('添加失败: ' + error.message);
+    }
+  };
+
   return (
     <StoreContext.Provider value={{
       ...state,
@@ -183,6 +195,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       rollbackBatch,
       addManualCost,
       deleteManualCost,
+      addStaff,
     }}>
       {children}
     </StoreContext.Provider>

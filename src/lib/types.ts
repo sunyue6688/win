@@ -32,6 +32,7 @@ export interface DataStoreContextType extends DataStoreState {
   rollbackBatch: (batchId: string) => void;
   addManualCost: (cost: any) => void;
   deleteManualCost: (id: string) => void;
+  addStaff: (staff: any) => void;
 }
 
 
