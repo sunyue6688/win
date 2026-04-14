@@ -31,6 +31,7 @@ export default function StaffView() {
   const { staff: rawStaff, projectLogs, opportunityLogs, departmentLogs } = useStore()
   const [searchText, setSearchText] = useState('')
   const kpiCols = useResponsiveGrid('1fr 1fr', '1fr', '1fr')
+  const statCols = useResponsiveGrid('repeat(4, 1fr)', 'repeat(2, 1fr)', '1fr')
 
   const staffList = useMemo(() => {
     return rawStaff.map((s, i) => {
@@ -234,7 +235,7 @@ export default function StaffView() {
     <div>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        gridTemplateColumns: statCols,
         gap: SPACING.lg,
         marginBottom: SPACING.xl,
       }}>
