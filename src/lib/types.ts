@@ -31,6 +31,7 @@ export interface DataStoreContextType extends DataStoreState {
   clearTable: (tableName: string) => void;
   rollbackBatch: (batchId: string) => void;
   addManualCost: (cost: any) => void;
+  deleteManualCost: (id: string) => void;
 }
 
 

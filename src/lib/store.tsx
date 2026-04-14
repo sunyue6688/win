@@ -164,6 +164,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const deleteManualCost = async (id: string) => {
+    try {
+      const { error } = await supabase.from('manual_costs').delete().eq('id', id);
+      if (error) throw error;
+      Toast.success('已删除');
+      fetchAllData();
+    } catch (error: any) {
+      Toast.error('删除失败: ' + error.message);
+    }
+  };
+
   return (
     <StoreContext.Provider value={{
       ...state,
@@ -171,6 +182,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       clearTable,
       rollbackBatch,
       addManualCost,
+      deleteManualCost,
     }}>
       {children}
     </StoreContext.Provider>

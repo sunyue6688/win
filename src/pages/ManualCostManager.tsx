@@ -9,7 +9,7 @@ import { useStore } from '../lib/store';
 const { Title } = Typography;
 
 export default function ManualCostManager() {
-  const { manualCosts, addManualCost } = useStore();
+  const { manualCosts, addManualCost, deleteManualCost } = useStore();
 
   const handleAdd = (values: any) => {
     addManualCost(values);
@@ -62,7 +62,14 @@ export default function ManualCostManager() {
             {
               title: '操作',
               key: 'action',
-              render: () => <Button icon={<IconDelete />} type="danger" size="small" />,
+              render: (_: unknown, record: any) => (
+                <Button
+                  icon={<IconDelete />}
+                  type="danger"
+                  size="small"
+                  onClick={() => deleteManualCost(record.id)}
+                />
+              ),
             },
           ]}
         />
